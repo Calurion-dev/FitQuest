@@ -7,6 +7,7 @@ import {
   activeBonusPercent,
   levelFromXp,
   movement,
+  movementTotals,
   questProgress,
   setAmount,
   setXp,
@@ -100,6 +101,20 @@ export const useStore = create<AppState & Actions>()(
         const xpBase = workout.sets.reduce((acc, s) => acc + setXp(s, bonusPercent), 0)
         const workouts = [workout, ...state.workouts]
 
+        // Records personnels : on compare à ce qui existait avant cette séance.
+        const records: LootSummary['records'] = []
+        for (const s of workout.sets) {
+          const m = movement(s.movementId)
+          if (!m) continue
+          const value = setAmount(s)
+          const previous = movementTotals(state.workouts, s.movementId).best
+          const seen = records.find((r) => r.movementId === s.movementId)
+          if (previous > 0 && value > Math.max(previous, seen?.value ?? 0)) {
+            if (seen) seen.value = value
+            else records.push({ movementId: s.movementId, value, previous, isHold: Boolean(m.isHold) })
+          }
+        }
+
         // Quêtes : progression recalculée sur les séances, récompense versée une seule fois.
         const quests = state.quests.map((q) => ({ ...q }))
         const questsCompleted: Quest[] = []
@@ -177,6 +192,7 @@ export const useStore = create<AppState & Actions>()(
           levelBefore,
           levelAfter,
           statLevelUps,
+          records,
           questsCompleted,
           badgesUnlocked,
           streakDays,

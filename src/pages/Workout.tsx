@@ -43,6 +43,7 @@ export default function WorkoutPage() {
   const [restEndsAt, setRestEndsAt] = useState<number | null>(null)
   const [now, setNow] = useState(Date.now())
   const [loot, setLoot] = useState<LootSummary | null>(null)
+  const [shared, setShared] = useState(false)
 
   useEffect(() => {
     if (phase !== 'active') return
@@ -127,12 +128,35 @@ export default function WorkoutPage() {
     setPhase('setup')
     setSets([])
     setLoot(null)
+    setShared(false)
     setStartedAt(0)
     setRestEndsAt(null)
   }
 
   // ---------- Écran LOOT ----------
   if (phase === 'done' && loot) {
+    const share = async () => {
+      const text = [
+        '💪 Séance terminée sur FitQuest',
+        `+${loot.xpTotal} XP · ${loot.totalReps} reps · ${formatDuration(loot.durationSec)}`,
+        `🔥 ${loot.streakDays} jours d'affilée`,
+        ...loot.records.map((r) => {
+          const m = movementById(r.movementId)
+          return `🏅 Record : ${m?.name ?? r.movementId} ${r.value}${r.isHold ? ' s' : ''} (avant ${r.previous})`
+        }),
+        `Rejoins-moi : ${window.location.origin}${import.meta.env.BASE_URL}`
+      ].join('\n')
+      try {
+        if (navigator.share) await navigator.share({ title: 'FitQuest', text })
+        else {
+          await navigator.clipboard.writeText(text)
+          setShared(true)
+        }
+      } catch {
+        /* partage annulé */
+      }
+    }
+
     return (
       <div className="animate-floaty mx-auto max-w-2xl space-y-4">
         <div className="text-center">
@@ -187,6 +211,26 @@ export default function WorkoutPage() {
           </div>
         ))}
 
+        {loot.records.length > 0 && (
+          <div className="animate-pop card border-volt bg-volt/10 px-4 py-3">
+            <div className="eyebrow text-volt">Records battus</div>
+            {loot.records.map((r) => {
+              const m = movementById(r.movementId)
+              return (
+                <div key={r.movementId} className="mt-1.5 flex items-center gap-2 text-sm">
+                  <span className="text-lg">{m?.emoji}</span>
+                  <span className="flex-1 truncate font-semibold">{m?.name ?? r.movementId}</span>
+                  <span className="hud text-xs font-bold text-volt">
+                    {r.value}
+                    {r.isHold ? ' s' : ''}
+                    <span className="ml-1.5 font-normal text-mute">avant {r.previous}</span>
+                  </span>
+                </div>
+              )
+            })}
+          </div>
+        )}
+
         {loot.questsCompleted.map((q) => (
           <div key={q.id} className="card flex items-center gap-3 px-4 py-3 text-sm">
             <span className="text-lg">{q.icon}</span>
@@ -230,6 +274,10 @@ export default function WorkoutPage() {
             Retour au héros
           </button>
         </div>
+
+        <button onClick={share} className="btn w-full py-3.5 text-xs">
+          {shared ? '✅ Résumé copié !' : '📣 Partager ma séance'}
+        </button>
       </div>
     )
   }

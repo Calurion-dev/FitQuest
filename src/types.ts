@@ -108,6 +108,8 @@ export interface LootSummary {
   statLevelUps: { stat: StatKey; before: number; after: number }[]
   questsCompleted: Quest[]
   badgesUnlocked: BadgeDef[]
+  /** Records personnels battus pendant la séance (meilleure série par mouvement). */
+  records: { movementId: string; value: number; previous: number; isHold: boolean }[]
   streakDays: number
   totalReps: number
   durationSec: number

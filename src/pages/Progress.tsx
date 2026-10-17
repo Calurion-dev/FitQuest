@@ -11,13 +11,18 @@ import {
   visitedSpots
 } from '../game/engine'
 import { BADGES } from '../game/badges'
-import { dateFromKey, weekKey } from '../lib/date'
+import { tierFromLevel } from '../game/tiers'
+import { dateFromKey, dayKey, formatDateShort, formatDuration, weekKey } from '../lib/date'
 import { useStore } from '../store/useStore'
+
+/** Intensité du calendrier d'assiduité (0 = repos, 4 = grosse séance). */
+const DAY_LEVELS = ['', 'bg-volt/25', 'bg-volt/45', 'bg-volt/70', 'bg-volt']
 
 export default function Progress() {
   const workouts = useStore((s) => s.workouts)
   const badges = useStore((s) => s.badges)
   const player = useStore((s) => s.player)
+  const spots = useStore((s) => s.spots)
 
   const weeks = useMemo(() => {
     const out: { label: string; value: number }[] = []
@@ -34,6 +39,37 @@ export default function Progress() {
   }, [workouts])
 
   const unlockedCount = Object.keys(badges).length
+
+  // Assiduité : 12 semaines d'affilée, une colonne par semaine (lundi → dimanche).
+  const calendar = useMemo(() => {
+    const repsByDay = new Map<string, number>()
+    for (const w of workouts) {
+      repsByDay.set(w.dayKey, (repsByDay.get(w.dayKey) ?? 0) + w.sets.reduce((a, s) => a + (s.reps ?? 0), 0))
+    }
+    const max = Math.max(1, ...repsByDay.values())
+    const monday = new Date()
+    monday.setHours(12, 0, 0, 0)
+    monday.setDate(monday.getDate() - ((monday.getDay() + 6) % 7))
+    const cols: { key: string; reps: number; level: number }[][] = []
+    for (let i = 11; i >= 0; i--) {
+      const col: { key: string; reps: number; level: number }[] = []
+      for (let d = 0; d < 7; d++) {
+        const date = new Date(monday)
+        date.setDate(monday.getDate() - i * 7 + d)
+        const key = dayKey(date)
+        const reps = repsByDay.get(key) ?? 0
+        col.push({ key, reps, level: reps === 0 ? 0 : Math.min(4, 1 + Math.floor((reps / max) * 3)) })
+      }
+      cols.push(col)
+    }
+    return cols
+  }, [workouts])
+
+  const activeDays = calendar.flat().filter((d) => d.reps > 0).length
+  const recent = useMemo(
+    () => [...workouts].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 8),
+    [workouts]
+  )
 
   return (
     <div className="space-y-5 md:space-y-6">
@@ -66,6 +102,63 @@ export default function Progress() {
         <BarChart data={weeks} />
       </section>
 
+      <div className="grid gap-4 lg:grid-cols-3 lg:gap-6">
+        <section className="card p-4 md:p-5 lg:col-span-2">
+          <div className="flex items-baseline justify-between gap-3">
+            <h2 className="eyebrow">Assiduité (12 semaines)</h2>
+            <span className="hud text-[11px] text-mute">{activeDays} jours actifs</span>
+          </div>
+          <div className="mt-3 flex gap-1">
+            {calendar.map((col, ci) => (
+              <div key={ci} className="flex flex-1 flex-col gap-1">
+                {col.map((d) => (
+                  <div
+                    key={d.key}
+                    title={`${d.key} · ${d.reps} reps`}
+                    className={`aspect-square rounded-[3px] border ${
+                      d.level ? `border-transparent ${DAY_LEVELS[d.level]}` : 'border-edge bg-panel-2'
+                    }`}
+                  />
+                ))}
+              </div>
+            ))}
+          </div>
+          <div className="mt-3 flex items-center gap-1.5 text-[10px] text-zinc-600">
+            <span>moins</span>
+            {DAY_LEVELS.map((c, i) => (
+              <span
+                key={i}
+                className={`h-2.5 w-2.5 rounded-[2px] ${
+                  i ? `border-transparent ${c}` : 'border border-edge bg-panel-2'
+                }`}
+              />
+            ))}
+            <span>plus</span>
+          </div>
+        </section>
+
+        <section className="space-y-2.5">
+          <h2 className="eyebrow">Dernières séances</h2>
+          {recent.length === 0 && (
+            <p className="card border-dashed p-4 text-xs text-mute">Rien pour l'instant.</p>
+          )}
+          {recent.map((w) => {
+            const reps = w.sets.reduce((a, s) => a + (s.reps ?? 0), 0)
+            const spot = spots.find((s) => s.id === w.spotId)
+            return (
+              <div key={w.id} className="card flex items-center gap-3 px-3.5 py-2.5">
+                <span className="hud shrink-0 text-[11px] text-mute">{formatDateShort(w.date)}</span>
+                <span className="min-w-0 flex-1 truncate text-xs text-zinc-300">
+                  {w.sets.length} séries · {reps} reps{spot ? ` · ${spot.name}` : ''}
+                </span>
+                <span className="hud shrink-0 text-[11px] text-mute">{formatDuration(w.durationSec)}</span>
+                <span className="hud shrink-0 text-xs font-bold text-volt">+{w.xp}</span>
+              </div>
+            )
+          })}
+        </section>
+      </div>
+
       <div className="grid gap-5 lg:grid-cols-3 lg:gap-6">
         <div className="space-y-3 lg:col-span-2">
           <h2 className="eyebrow">Par mouvement</h2>
@@ -81,7 +174,12 @@ export default function Progress() {
                     <span className="text-2xl">{m.emoji}</span>
                     <span className="min-w-0 flex-1">
                       <span className="block truncate font-display text-sm uppercase">{m.name}</span>
-                      <span className="eyebrow mt-0.5 block">{FAMILY_LABELS[m.family]}</span>
+                      <span className="eyebrow mt-0.5 block">
+                        {FAMILY_LABELS[m.family]} ·{' '}
+                        <span style={{ color: tierFromLevel(info.level).color }}>
+                          {tierFromLevel(info.level).name}
+                        </span>
+                      </span>
                     </span>
                     <span className="hud shrink-0 rounded-lg border-2 border-volt/40 bg-volt/10 px-2 py-1 text-[11px] font-bold text-volt">
                       Nv {info.level}
