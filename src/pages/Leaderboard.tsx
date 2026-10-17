@@ -1,12 +1,20 @@
-import { useMemo } from 'react'
+import { useEffect, useMemo } from 'react'
 import { RankBadge } from '../components/RankBadge'
 import { RANKS, rankFromXp, rankProgress } from '../game/ranks'
 import { RIVALS } from '../game/rivals'
+import { useCloud } from '../store/useCloud'
 import { useStore } from '../store/useStore'
 
 export default function Leaderboard() {
   const player = useStore((s) => s.player)
   const progress = rankProgress(player.xpTotal)
+  const cloudUser = useCloud((s) => s.user)
+  const onlineScores = useCloud((s) => s.scores)
+  const loadScores = useCloud((s) => s.loadScores)
+
+  useEffect(() => {
+    if (cloudUser) void loadScores()
+  }, [cloudUser, loadScores])
 
   const entries = useMemo(() => {
     return [
@@ -121,6 +129,64 @@ export default function Leaderboard() {
           })}
         </div>
       </section>
+
+      {cloudUser && (
+        <section>
+          <h2 className="mb-2 text-sm font-bold uppercase tracking-wider text-zinc-400">Ligue en ligne</h2>
+          <div className="space-y-1.5">
+            {onlineScores.length === 0 && (
+              <p className="rounded-xl border border-dashed border-zinc-800 p-3 text-xs text-zinc-500">
+                Personne d'autre n'est encore inscrit. Partage l'app à tes potes pour lancer la ligue !
+              </p>
+            )}
+            {onlineScores.map((s, i) => {
+              const me = s.userId === cloudUser.id
+              return (
+                <div
+                  key={s.userId}
+                  className={`flex items-center gap-3 rounded-xl border px-3 py-2 ${
+                    me ? 'border-emerald-500/60 bg-emerald-500/10' : 'border-zinc-800 bg-zinc-900/60'
+                  }`}
+                >
+                  <span
+                    className={`w-6 text-center text-xs font-black ${
+                      i === 0
+                        ? 'text-amber-300'
+                        : i === 1
+                          ? 'text-zinc-300'
+                          : i === 2
+                            ? 'text-orange-400'
+                            : 'text-zinc-600'
+                    }`}
+                  >
+                    {i + 1}
+                  </span>
+                  <span className="text-lg">🌍</span>
+                  <span className="min-w-0 flex-1">
+                    <span className="flex items-center gap-2">
+                      <span className={`truncate text-sm font-bold ${me ? 'text-emerald-300' : 'text-zinc-100'}`}>
+                        {s.pseudo}
+                      </span>
+                      {me && (
+                        <span className="shrink-0 rounded-full bg-emerald-500/20 px-2 py-0.5 text-[10px] font-bold text-emerald-300">
+                          toi
+                        </span>
+                      )}
+                    </span>
+                    <span className="block text-[10px] text-zinc-500">{s.rank}</span>
+                  </span>
+                  <span className="shrink-0 text-xs font-bold tabular-nums text-zinc-300">
+                    {s.xp.toLocaleString('fr-FR')} XP
+                  </span>
+                </div>
+              )
+            })}
+          </div>
+          <p className="mt-2 text-[10px] leading-relaxed text-zinc-600">
+            Classement partagé entre les joueurs connectés avec Google (seuls ton pseudo et ton XP sont publiés).
+          </p>
+        </section>
+      )}
 
       <section>
         <h2 className="mb-2 text-sm font-bold uppercase tracking-wider text-zinc-400">Ligue locale</h2>

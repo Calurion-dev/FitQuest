@@ -45,7 +45,8 @@ npm run build   # type-check TypeScript (tsc) + build Vite : doit passer sans er
 ## Cartographie rapide
 
 - Règles de jeu : `src/game/engine.ts` (XP, niveaux, progression), `src/game/quests.ts` (quotidiennes, hebdo, boss), `src/game/badges.ts`, `src/game/ranks.ts` (rangs type Classé Fortnite), `src/game/rivals.ts` (rivaux de la ligue locale, simulés tant qu'il n'y a pas de backend)
+- Sauvegarde cloud / connexion Google : `src/lib/supabase.ts` (client, désactivé si pas de `.env`), `src/lib/cloud.ts` (appels Supabase), `src/store/useCloud.ts` (synchro), `src/components/CloudAccount.tsx` (UI Réglages), `supabase/schema.sql`, `docs/SUPABASE.md`
 - Référentiel des mouvements : `src/data/movements.ts`
-- État persisté : `src/store/useStore.ts`
+- État persisté : `src/store/useStore.ts` (+ `updatedAt`, qui sert à comparer local/cloud)
 - Écrans : `src/pages/Home.tsx`, `Workout.tsx`, `Progress.tsx`, `Leaderboard.tsx`, `MapPage.tsx`, `Settings.tsx`
 - Cahier des charges : `CDC.md`

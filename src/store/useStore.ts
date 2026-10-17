@@ -30,7 +30,13 @@ import type {
 
 export type AppState = AppData
 
+/** Marque les données comme modifiées à l'instant (déclenche la synchro cloud). */
+const touch = () => ({ updatedAt: new Date().toISOString() })
+
 const initialState: AppState = {
+  // Époque : tant que rien n'a été modifié localement, le cloud est considéré
+  // comme plus récent (utile pour restaurer ses données sur un nouvel appareil).
+  updatedAt: new Date(0).toISOString(),
   player: {
     pseudo: '',
     xpTotal: 0,
@@ -63,26 +69,28 @@ export const useStore = create<AppState & Actions>()(
     (set, get) => ({
       ...initialState,
 
-      setPseudo: (pseudo) => set((s) => ({ player: { ...s.player, pseudo } })),
+      setPseudo: (pseudo) => set((s) => ({ ...touch(), player: { ...s.player, pseudo } })),
 
-      setSettings: (patch) => set((s) => ({ settings: { ...s.settings, ...patch } })),
+      setSettings: (patch) => set((s) => ({ ...touch(), settings: { ...s.settings, ...patch } })),
 
       ensureQuests: () => set((s) => ({ quests: ensureQuests(s.quests) })),
 
       addSpot: (data) => {
         const spot: Spot = { ...data, id: uid(), createdAt: new Date().toISOString() }
-        set((s) => ({ spots: [spot, ...s.spots] }))
+        set((s) => ({ ...touch(), spots: [spot, ...s.spots] }))
         return spot
       },
 
       deleteSpot: (id) =>
         set((s) => ({
+          ...touch(),
           spots: s.spots.filter((x) => x.id !== id),
           reviews: s.reviews.filter((r) => r.spotId !== id)
         })),
 
       addReview: (data) =>
         set((s) => ({
+          ...touch(),
           reviews: [{ ...data, id: uid(), date: new Date().toISOString() }, ...s.reviews]
         })),
 
@@ -158,7 +166,7 @@ export const useStore = create<AppState & Actions>()(
           }
         }
 
-        set({ player, workouts, quests, badges })
+        set({ ...touch(), player, workouts, quests, badges })
 
         return {
           xpBase,
@@ -191,12 +199,28 @@ export const useStore = create<AppState & Actions>()(
         if (data.settings && typeof data.settings === 'object') {
           clean.settings = { ...initialState.settings, ...data.settings }
         }
-        set(clean)
+        set({
+          ...clean,
+          // En restaurant une sauvegarde ou le cloud, on garde son horodatage.
+          updatedAt: typeof data.updatedAt === 'string' ? data.updatedAt : new Date().toISOString()
+        })
       },
 
       resetAll: () => set({ ...initialState })
     }),
-    { name: 'swrpg-v1', version: 1 }
+    {
+      name: 'swrpg-v1',
+      version: 2,
+      // v1 → v2 : ajout de l'horodatage `updatedAt` (comparaison local/cloud).
+      migrate: (persisted) => {
+        const p = (persisted ?? {}) as Partial<AppState>
+        return {
+          ...initialState,
+          ...p,
+          player: { ...initialState.player, ...(p.player ?? {}) }
+        } as unknown as AppState & Actions
+      }
+    }
   )
 )
 

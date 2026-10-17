@@ -86,6 +86,8 @@ export interface Settings {
 }
 
 export interface AppData {
+  /** Date ISO de la dernière modification locale (sert à comparer avec le cloud). */
+  updatedAt: string
   player: Player
   workouts: Workout[]
   spots: Spot[]

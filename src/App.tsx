@@ -7,14 +7,20 @@ import MapPage from './pages/MapPage'
 import Progress from './pages/Progress'
 import Settings from './pages/Settings'
 import WorkoutPage from './pages/Workout'
+import { useCloud } from './store/useCloud'
 import { useStore } from './store/useStore'
 
 export default function App() {
   const ensureQuests = useStore((s) => s.ensureQuests)
+  const initCloud = useCloud((s) => s.init)
 
   useEffect(() => {
     ensureQuests()
   }, [ensureQuests])
+
+  useEffect(() => {
+    initCloud()
+  }, [initCloud])
 
   return (
     <Routes>

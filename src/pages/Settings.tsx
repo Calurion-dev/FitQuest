@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react'
+import { CloudAccount } from '../components/CloudAccount'
 import { dayKey } from '../lib/date'
 import { useStore } from '../store/useStore'
 
@@ -74,6 +75,8 @@ export default function Settings() {
           </button>
         </div>
       </section>
+
+      <CloudAccount />
 
       <section className="rounded-2xl border border-zinc-800 bg-zinc-900/60 p-4">
         <h2 className="mb-2 text-sm font-bold uppercase tracking-wider text-zinc-400">
