@@ -2,6 +2,11 @@ import L from 'leaflet'
 import { useEffect, useRef } from 'react'
 import type { Spot } from '../types'
 
+/** OpenStreetMap ne délivre pas de clé : VITE_TILE_URL branche un fournisseur qui en demande une. */
+const TILE_URL = (import.meta.env.VITE_TILE_URL as string | undefined)?.trim()
+const OSM_CREDIT =
+  '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+
 interface Props {
   spots: Spot[]
   selectedId: string | null
@@ -41,10 +46,11 @@ export function SpotMap({
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return
     const map = L.map(containerRef.current).setView([46.6, 2.4], 6)
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-      attribution:
-        '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
-      subdomains: 'abcd',
+    L.tileLayer(TILE_URL || 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+      attribution: TILE_URL
+        ? OSM_CREDIT
+        : `${OSM_CREDIT} &copy; <a href="https://carto.com/attributions">CARTO</a>`,
+      subdomains: TILE_URL ? undefined : 'abcd',
       maxZoom: 19
     }).addTo(map)
     markersRef.current = L.layerGroup().addTo(map)
