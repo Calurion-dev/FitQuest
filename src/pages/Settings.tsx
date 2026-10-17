@@ -138,6 +138,7 @@ export default function Settings() {
           >
             🗑️ Tout réinitialiser
           </button>
+          <p className="mt-2 text-center text-[11px] text-mute">Cette action est irréversible.</p>
         </section>
 
         <section className="card relative overflow-hidden p-4 md:col-span-2">

@@ -5,7 +5,7 @@ import { setXp } from '../game/engine'
 import { dayKey, formatDuration } from '../lib/date'
 import { uid } from '../lib/id'
 import { useStore } from '../store/useStore'
-import type { LootSummary, Workout, WorkoutSet } from '../types'
+import type { LootSummary, RoutineItem, Workout, WorkoutSet } from '../types'
 
 const TEMPLATES: { id: string; label: string; icon: string; movements: string[] }[] = [
   { id: 'push', label: 'Push', icon: '💪', movements: ['pompes', 'pompes_larges', 'pompes_diamant', 'dips'] },
@@ -26,11 +26,13 @@ function secondsToClock(total: number): string {
 export default function WorkoutPage() {
   const navigate = useNavigate()
   const location = useLocation()
-  const initialSpotId = (location.state as { spotId?: string } | null)?.spotId
+  const initialSpotId = (location.state as { spotId?: string; routineId?: string } | null)?.spotId
+  const initialRoutineId = (location.state as { spotId?: string; routineId?: string } | null)?.routineId
   const spots = useStore((s) => s.spots)
   const workouts = useStore((s) => s.workouts)
   const settings = useStore((s) => s.settings)
   const finishWorkout = useStore((s) => s.finishWorkout)
+  const routine = useStore((s) => s.routines).find((r) => r.id === initialRoutineId)
 
   const [phase, setPhase] = useState<Phase>('setup')
   const [templateId, setTemplateId] = useState('full')
@@ -44,12 +46,26 @@ export default function WorkoutPage() {
   const [now, setNow] = useState(Date.now())
   const [loot, setLoot] = useState<LootSummary | null>(null)
   const [shared, setShared] = useState(false)
+  const [targets, setTargets] = useState<Record<string, RoutineItem>>({})
 
   useEffect(() => {
     if (phase !== 'active') return
     const t = setInterval(() => setNow(Date.now()), 500)
     return () => clearInterval(t)
   }, [phase])
+
+  // Routine choisie depuis la page Routines : on pré-remplit la séance et ses objectifs.
+  useEffect(() => {
+    if (!routine) return
+    setTemplateId('routine')
+    setSelected(routine.items.map((i) => i.movementId))
+    setTargets(Object.fromEntries(routine.items.map((i) => [i.movementId, i])))
+    const first = routine.items[0]
+    if (first) {
+      setCurrent(first.movementId)
+      setAmount(first.reps)
+    }
+  }, [routine?.id])
 
   const liveXp = useMemo(() => sets.reduce((a, s) => a + setXp(s), 0), [sets])
   const currentMovement = movementById(current)
@@ -82,7 +98,7 @@ export default function WorkoutPage() {
   const pickMovement = (id: string) => {
     setCurrent(id)
     const m = movementById(id)
-    setAmount(m?.isHold ? 30 : 10)
+    setAmount(targets[id]?.reps ?? (m?.isHold ? 30 : 10))
   }
 
   const start = () => {
@@ -299,6 +315,26 @@ export default function WorkoutPage() {
           </div>
         )}
 
+        {routine && (
+          <div className="card border-volt/60 p-4">
+            <div className="eyebrow text-volt">Routine chargée</div>
+            <div className="mt-0.5 font-display text-lg uppercase">{routine.name}</div>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {routine.items.map((i) => {
+                const m = movementById(i.movementId)
+                return (
+                  <span key={i.movementId} className="chip text-[11px]">
+                    {m?.emoji} {m?.name}
+                    <span className="hud text-mute">
+                      {i.sets}×{i.reps}
+                    </span>
+                  </span>
+                )
+              })}
+            </div>
+          </div>
+        )}
+
         <div className="grid gap-5 lg:grid-cols-3 lg:gap-6">
           <div className="space-y-5 lg:col-span-2">
             <section>
@@ -416,9 +452,9 @@ export default function WorkoutPage() {
                   className={`chip shrink-0 text-xs ${on ? 'chip-on' : ''}`}
                 >
                   {m.emoji} {m.name}
-                  {count > 0 && (
+                  {(count > 0 || targets[id]) && (
                     <span className={`hud rounded-full px-1.5 text-[10px] ${on ? 'bg-volt text-ink' : 'bg-panel-2'}`}>
-                      {count}
+                      {targets[id] ? `${count}/${targets[id].sets}` : count}
                     </span>
                   )}
                 </button>
@@ -430,6 +466,12 @@ export default function WorkoutPage() {
             <div className="card p-5 text-center md:p-6">
               <div className="text-3xl">{currentMovement.emoji}</div>
               <div className="eyebrow mt-2">{currentMovement.name}</div>
+              {targets[currentMovement.id] && (
+                <div className="hud mt-1 text-[11px] text-volt">
+                  Objectif {targets[currentMovement.id].sets} × {targets[currentMovement.id].reps}
+                  {currentMovement.isHold ? ' s' : ''}
+                </div>
+              )}
               <div className="hud my-3 text-6xl font-bold leading-none md:text-7xl">{amount}</div>
               <div className="eyebrow">{currentMovement.isHold ? 'secondes' : 'répétitions'}</div>
               <div className="mx-auto mt-5 grid max-w-md grid-cols-4 gap-2">

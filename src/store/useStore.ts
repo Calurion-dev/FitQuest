@@ -23,6 +23,7 @@ import type {
   Player,
   Quest,
   Review,
+  Routine,
   Settings,
   Spot,
   StatKey,
@@ -46,6 +47,7 @@ const initialState: AppState = {
     spotBonusClaimed: []
   },
   workouts: [],
+  routines: [],
   spots: [],
   reviews: [],
   quests: [],
@@ -61,6 +63,8 @@ interface Actions {
   addSpot: (data: Omit<Spot, 'id' | 'createdAt'>) => Spot
   deleteSpot: (id: string) => void
   addReview: (data: Omit<Review, 'id' | 'date'>) => void
+  saveRoutine: (routine: Routine) => void
+  deleteRoutine: (id: string) => void
   replaceAll: (data: Partial<AppData>) => void
   resetAll: () => void
 }
@@ -94,6 +98,17 @@ export const useStore = create<AppState & Actions>()(
           ...touch(),
           reviews: [{ ...data, id: uid(), date: new Date().toISOString() }, ...s.reviews]
         })),
+
+      saveRoutine: (routine) =>
+        set((s) => ({
+          ...touch(),
+          routines: s.routines.some((r) => r.id === routine.id)
+            ? s.routines.map((r) => (r.id === routine.id ? routine : r))
+            : [routine, ...s.routines]
+        })),
+
+      deleteRoutine: (id) =>
+        set((s) => ({ ...touch(), routines: s.routines.filter((r) => r.id !== id) })),
 
       finishWorkout: (workout) => {
         const state = get()
@@ -208,6 +223,7 @@ export const useStore = create<AppState & Actions>()(
           clean.player = { ...initialState.player, ...data.player }
         }
         if (Array.isArray(data.workouts)) clean.workouts = data.workouts
+        if (Array.isArray(data.routines)) clean.routines = data.routines
         if (Array.isArray(data.spots)) clean.spots = data.spots
         if (Array.isArray(data.reviews)) clean.reviews = data.reviews
         if (Array.isArray(data.quests)) clean.quests = data.quests
@@ -226,8 +242,9 @@ export const useStore = create<AppState & Actions>()(
     }),
     {
       name: 'swrpg-v1',
-      version: 2,
-      // v1 → v2 : ajout de l'horodatage `updatedAt` (comparaison local/cloud).
+      version: 3,
+      // v1 → v2 : horodatage `updatedAt` (comparaison local/cloud).
+      // v2 → v3 : routines personnelles (`routines`), valeurs par défaut sinon.
       migrate: (persisted) => {
         const p = (persisted ?? {}) as Partial<AppState>
         return {

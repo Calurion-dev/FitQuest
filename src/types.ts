@@ -85,11 +85,25 @@ export interface Settings {
   restSec: number
 }
 
+export interface RoutineItem {
+  movementId: string
+  /** Objectif : nombre de séries et répétitions (ou secondes) par série. */
+  sets: number
+  reps: number
+}
+
+export interface Routine {
+  id: string
+  name: string
+  items: RoutineItem[]
+}
+
 export interface AppData {
   /** Date ISO de la dernière modification locale (sert à comparer avec le cloud). */
   updatedAt: string
   player: Player
   workouts: Workout[]
+  routines: Routine[]
   spots: Spot[]
   reviews: Review[]
   quests: Quest[]

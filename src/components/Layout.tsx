@@ -1,11 +1,13 @@
 import { NavLink, Outlet } from 'react-router-dom'
 
-const TABS = [
+const TABS: { to: string; label: string; short?: string; icon: string }[] = [
   { to: '/', label: 'Héros', icon: '🦸' },
   { to: '/workout', label: 'Séance', icon: '💪' },
+  { to: '/routines', label: 'Routines', icon: '📋' },
   { to: '/map', label: 'Spots', icon: '🗺️' },
+  { to: '/bodygraph', label: 'Body graph', short: 'Muscles', icon: '🧍' },
   { to: '/progress', label: 'Progrès', icon: '📈' },
-  { to: '/leaderboard', label: 'Classement', icon: '🏆' },
+  { to: '/leaderboard', label: 'Classement', short: 'Rangs', icon: '🏆' },
   { to: '/settings', label: 'Réglages', icon: '⚙️' }
 ]
 
@@ -77,13 +79,13 @@ export default function Layout() {
               to={t.to}
               end={t.to === '/'}
               className={({ isActive }) =>
-                `flex flex-1 flex-col items-center gap-0.5 rounded-xl px-0.5 py-1.5 text-[10px] font-semibold transition-colors ${
+                `flex flex-1 flex-col items-center gap-0.5 rounded-xl px-0.5 py-1.5 text-[9px] font-semibold transition-colors ${
                   isActive ? 'bg-volt text-ink' : 'text-zinc-500'
                 }`
               }
             >
-              <span className="text-lg leading-none">{t.icon}</span>
-              {t.label}
+              <span className="text-base leading-none">{t.icon}</span>
+              {t.short ?? t.label}
             </NavLink>
           ))}
         </div>
