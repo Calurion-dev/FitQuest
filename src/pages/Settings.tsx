@@ -50,108 +50,112 @@ export default function Settings() {
       replaceAll(data)
       setMessage('Import réussi ✅')
     } catch {
-      setMessage("Fichier invalide ❌")
+      setMessage('Fichier invalide ❌')
     }
   }
 
   return (
-    <div className="space-y-5">
-      <h1 className="text-2xl font-black">Réglages</h1>
+    <div className="space-y-5 md:space-y-6">
+      <header>
+        <div className="eyebrow">Configuration</div>
+        <h1 className="mt-0.5 text-3xl uppercase md:text-4xl">Réglages</h1>
+      </header>
 
-      <section className="rounded-2xl border border-zinc-800 bg-zinc-900/60 p-4">
-        <h2 className="mb-2 text-sm font-bold uppercase tracking-wider text-zinc-400">Héros</h2>
-        <div className="flex gap-2">
-          <input
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            className="flex-1 rounded-xl border border-zinc-800 bg-zinc-900 px-3 py-2.5 text-base outline-none focus:border-emerald-500"
-          />
-          <button
-            disabled={!name.trim() || name.trim() === player.pseudo}
-            onClick={() => setPseudo(name.trim())}
-            className="rounded-xl bg-emerald-500 px-4 font-bold text-zinc-950 disabled:opacity-40"
-          >
-            OK
-          </button>
-        </div>
-      </section>
-
-      <CloudAccount />
-
-      <section className="rounded-2xl border border-zinc-800 bg-zinc-900/60 p-4">
-        <h2 className="mb-2 text-sm font-bold uppercase tracking-wider text-zinc-400">
-          Repos par défaut entre les séries
-        </h2>
-        <div className="grid grid-cols-4 gap-2">
-          {REST_OPTIONS.map((r) => (
+      <div className="grid gap-4 md:grid-cols-2 lg:gap-5">
+        <section className="card p-4">
+          <h2 className="eyebrow mb-3">Héros</h2>
+          <div className="flex gap-2">
+            <input value={name} onChange={(e) => setName(e.target.value)} className="input flex-1" />
             <button
-              key={r}
-              onClick={() => setSettings({ restSec: r })}
-              className={`rounded-xl border py-2.5 text-sm font-bold ${
-                settings.restSec === r
-                  ? 'border-emerald-500 bg-emerald-500/15 text-emerald-300'
-                  : 'border-zinc-800 bg-zinc-900/60 text-zinc-400'
-              }`}
+              disabled={!name.trim() || name.trim() === player.pseudo}
+              onClick={() => setPseudo(name.trim())}
+              className="btn btn-volt px-5"
             >
-              {r}s
+              OK
             </button>
-          ))}
-        </div>
-      </section>
+          </div>
+        </section>
 
-      <section className="rounded-2xl border border-zinc-800 bg-zinc-900/60 p-4">
-        <h2 className="mb-1 text-sm font-bold uppercase tracking-wider text-zinc-400">Données</h2>
-        <p className="mb-3 text-xs text-zinc-500">
-          {workouts.length} séance{workouts.length > 1 ? 's' : ''} · {spots.length} spot{spots.length > 1 ? 's' : ''} ·{' '}
-          {reviews.length} avis. Tout est stocké localement dans ton navigateur, rien n'est envoyé sur Internet.
-        </p>
-        <div className="grid grid-cols-2 gap-2">
-          <button
-            onClick={exportData}
-            className="rounded-xl border border-zinc-700 bg-zinc-900 py-2.5 text-sm font-bold text-zinc-200"
-          >
-            ⬇️ Exporter
-          </button>
-          <button
-            onClick={() => fileRef.current?.click()}
-            className="rounded-xl border border-zinc-700 bg-zinc-900 py-2.5 text-sm font-bold text-zinc-200"
-          >
-            ⬆️ Importer
-          </button>
-        </div>
-        <input
-          ref={fileRef}
-          type="file"
-          accept="application/json"
-          className="hidden"
-          onChange={(e) => {
-            const f = e.target.files?.[0]
-            if (f) void importData(f)
-            e.target.value = ''
-          }}
-        />
-        {message && <div className="mt-2 text-xs text-zinc-400">{message}</div>}
-        <button
-          onClick={() => {
-            if (confirm('Supprimer TOUTES tes données (séances, spots, avis, progression) ? Action irréversible.')) {
-              resetAll()
-              setMessage('Données réinitialisées')
-            }
-          }}
-          className="mt-3 w-full rounded-xl border border-red-500/40 py-2.5 text-sm font-bold text-red-400"
-        >
-          🗑️ Tout réinitialiser
-        </button>
-      </section>
+        <CloudAccount />
 
-      <section className="rounded-2xl border border-zinc-800 bg-zinc-900/60 p-4 text-xs leading-relaxed text-zinc-500">
-        <div className="mb-1 text-sm font-bold text-zinc-300">Street Workout RPG v0.1</div>
-        <p>
-          MVP web : XP, niveaux, quêtes, streak, badges, boss mensuels et carte des spots. Ajoute l'app à ton écran
-          d'accueil pour l'utiliser comme une vraie app, même au parc sans réseau.
-        </p>
-        <p className="mt-1">Prochaine étape (V2) : comptes en ligne, clans et défis entre amis, spots partagés.</p>
-      </section>
+        <section className="card p-4">
+          <h2 className="eyebrow mb-3">Repos par défaut entre les séries</h2>
+          <div className="grid grid-cols-4 gap-2">
+            {REST_OPTIONS.map((r) => (
+              <button
+                key={r}
+                onClick={() => setSettings({ restSec: r })}
+                className={`hud rounded-xl border-2 py-2.5 text-sm font-bold transition-colors ${
+                  settings.restSec === r
+                    ? 'border-volt bg-volt text-ink'
+                    : 'border-edge bg-panel text-mute hover:border-zinc-600'
+                }`}
+              >
+                {r}s
+              </button>
+            ))}
+          </div>
+        </section>
+
+        <section className="card p-4">
+          <h2 className="eyebrow mb-2">Données</h2>
+          <p className="mb-3.5 text-xs leading-relaxed text-mute">
+            <span className="hud">{workouts.length}</span> séance{workouts.length > 1 ? 's' : ''} ·{' '}
+            <span className="hud">{spots.length}</span> spot{spots.length > 1 ? 's' : ''} ·{' '}
+            <span className="hud">{reviews.length}</span> avis. Tout est stocké localement dans ton
+            navigateur, rien n'est envoyé sur Internet.
+          </p>
+          <div className="grid grid-cols-2 gap-2">
+            <button onClick={exportData} className="btn py-3 text-xs">
+              ⬇️ Exporter
+            </button>
+            <button onClick={() => fileRef.current?.click()} className="btn py-3 text-xs">
+              ⬆️ Importer
+            </button>
+          </div>
+          <input
+            ref={fileRef}
+            type="file"
+            accept="application/json"
+            className="hidden"
+            onChange={(e) => {
+              const f = e.target.files?.[0]
+              if (f) void importData(f)
+              e.target.value = ''
+            }}
+          />
+          {message && <div className="mt-2 text-xs text-mute">{message}</div>}
+          <button
+            onClick={() => {
+              if (
+                confirm('Supprimer TOUTES tes données (séances, spots, avis, progression) ? Action irréversible.')
+              ) {
+                resetAll()
+                setMessage('Données réinitialisées')
+              }
+            }}
+            className="btn btn-danger mt-3 w-full py-3 text-xs"
+          >
+            🗑️ Tout réinitialiser
+          </button>
+        </section>
+
+        <section className="card relative overflow-hidden p-4 md:col-span-2">
+          <div className="tape absolute inset-x-0 top-0" />
+          <div className="mt-2 flex flex-wrap items-end justify-between gap-3">
+            <div>
+              <div className="font-display text-lg uppercase">
+                FIT<span className="text-volt">QUEST</span>
+              </div>
+              <div className="eyebrow mt-1">v0.1 — street workout RPG</div>
+            </div>
+            <p className="max-w-md text-xs leading-relaxed text-mute">
+              XP, niveaux, quêtes, streak, badges, boss mensuels et carte des spots. Ajoute l'app à ton
+              écran d'accueil pour l'utiliser comme une vraie app, même au parc sans réseau.
+            </p>
+          </div>
+        </section>
+      </div>
     </div>
   )
 }

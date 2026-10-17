@@ -18,24 +18,23 @@ function QuestRow({ quest, workouts }: { quest: Quest; workouts: Workout[] }) {
   const progress = Math.min(quest.target, questProgress(quest, workouts))
   const pct = Math.round((progress / quest.target) * 100)
   return (
-    <div className="rounded-xl border border-zinc-800 bg-zinc-900/60 p-3">
-      <div className="flex items-center justify-between gap-2">
-        <div className="flex items-center gap-2 text-sm font-medium">
+    <div className="card p-3.5">
+      <div className="flex items-start justify-between gap-2">
+        <div className="flex items-center gap-2 text-sm font-semibold">
           <span>{quest.icon}</span>
           {quest.title}
         </div>
-        <span className={`shrink-0 text-xs font-semibold ${quest.claimed ? 'text-emerald-400' : 'text-zinc-400'}`}>
-          {quest.claimed ? `✓ +${quest.rewardXp}` : `+${quest.rewardXp} XP`}
-        </span>
+        {quest.claimed ? (
+          <span className="sticker shrink-0">fait</span>
+        ) : (
+          <span className="hud shrink-0 text-xs font-bold text-volt">+{quest.rewardXp} XP</span>
+        )}
       </div>
-      <div className="mt-1 text-xs text-zinc-500">{quest.description}</div>
-      <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-zinc-800">
-        <div
-          className={`h-full rounded-full transition-all ${quest.claimed ? 'bg-emerald-400' : 'bg-emerald-500'}`}
-          style={{ width: `${pct}%` }}
-        />
+      <div className="mt-1 text-xs text-mute">{quest.description}</div>
+      <div className="bar mt-2.5">
+        <div style={{ width: `${pct}%` }} />
       </div>
-      <div className="mt-1 text-right text-[10px] text-zinc-500">
+      <div className="hud mt-1 text-right text-[10px] text-zinc-500">
         {Math.round(progress)} / {quest.target}
       </div>
     </div>
@@ -48,14 +47,14 @@ function StatBar({ stat, xp }: { stat: StatKey; xp: number }) {
   return (
     <div>
       <div className="flex items-center justify-between text-xs">
-        <span className="flex items-center gap-1.5 font-medium text-zinc-300">
+        <span className="flex items-center gap-1.5 font-semibold text-zinc-300">
           <span>{meta.icon}</span>
           {meta.label}
         </span>
-        <span className="text-zinc-500">Nv {info.level}</span>
+        <span className="hud text-[11px] text-mute">Nv {String(info.level).padStart(2, '0')}</span>
       </div>
-      <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-zinc-800">
-        <div className="h-full rounded-full bg-sky-500/80" style={{ width: `${info.pct}%` }} />
+      <div className="bar mt-1.5">
+        <div style={{ width: `${info.pct}%` }} />
       </div>
     </div>
   )
@@ -71,25 +70,29 @@ export default function Home() {
 
   if (!player.pseudo) {
     return (
-      <div className="flex min-h-[70vh] flex-col justify-center gap-5">
-        <div className="text-center">
-          <div className="text-5xl">💪</div>
-          <h1 className="mt-3 text-2xl font-black">Street Workout RPG</h1>
-          <p className="mt-2 text-sm text-zinc-400">
-            Transforme tes pompes, dips et tractions en XP, niveaux, quêtes et boss à vaincre.
+      <div className="flex min-h-[70vh] flex-col justify-center gap-6 md:min-h-[60vh]">
+        <div className="mx-auto w-full max-w-md text-center">
+          <div className="font-display text-4xl tracking-tight md:text-5xl">
+            FIT<span className="text-volt">QUEST</span>
+          </div>
+          <div className="tape mx-auto mt-4 w-40 rounded-full" />
+          <p className="mt-4 text-sm leading-relaxed text-zinc-400">
+            Tes pompes, dips et tractions deviennent de l'XP, des niveaux, des quêtes et des boss à
+            vaincre. Crée ton héros pour lancer le compteur.
           </p>
         </div>
-        <div className="space-y-3">
+        <div className="card mx-auto w-full max-w-md p-4">
+          <div className="eyebrow mb-2">Nom de héros</div>
           <input
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="Ton pseudo de héros"
-            className="w-full rounded-2xl border border-zinc-800 bg-zinc-900 px-4 py-3 text-base outline-none focus:border-emerald-500"
+            placeholder="Ex : Kevin du parc"
+            className="input"
           />
           <button
             disabled={!name.trim()}
             onClick={() => setPseudo(name.trim())}
-            className="w-full rounded-2xl bg-emerald-500 py-3 font-bold text-zinc-950 disabled:opacity-40"
+            className="btn btn-volt mt-3 w-full py-4 text-base"
           >
             Créer mon héros
           </button>
@@ -108,113 +111,134 @@ export default function Home() {
   const visited = visitedSpots(workouts).length
 
   return (
-    <div className="space-y-5">
-      <header className="flex items-center justify-between">
+    <div className="space-y-5 md:space-y-6">
+      <header className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <div className="text-[11px] uppercase tracking-widest text-zinc-500">Héros</div>
-          <h1 className="text-2xl font-black">{player.pseudo}</h1>
-          <div className="mt-1 flex items-center gap-1.5">
-            <RankBadge from={rank.rank.from} to={rank.rank.to} label={rank.rank.label} size={22} />
-            <span className="text-xs font-bold" style={{ color: rank.rank.to }}>
+          <div className="eyebrow">Héros</div>
+          <h1 className="mt-0.5 text-3xl uppercase md:text-4xl">{player.pseudo}</h1>
+          <div className="mt-2 flex items-center gap-2">
+            <RankBadge from={rank.rank.from} to={rank.rank.to} label={rank.rank.label} size={26} />
+            <span className="font-display text-xs uppercase tracking-wide" style={{ color: rank.rank.to }}>
               {rank.rank.name}
             </span>
           </div>
         </div>
-        <div className="rounded-2xl border border-orange-500/30 bg-orange-500/10 px-3 py-2 text-center">
-          <div className="text-lg leading-none">🔥</div>
-          <div className="text-xs font-bold text-orange-400">{player.streakDays} j</div>
+        <div className="card flex items-center gap-2.5 px-3.5 py-2">
+          <span className="text-xl leading-none">🔥</span>
+          <div>
+            <div className="hud text-lg font-bold leading-none">{player.streakDays}</div>
+            <div className="eyebrow mt-1">jours d'affilée</div>
+          </div>
         </div>
       </header>
 
-      <section className="rounded-2xl border border-zinc-800 bg-zinc-900/60 p-4">
-        <div className="flex items-end justify-between">
-          <div>
-            <div className="text-3xl font-black text-emerald-400">Niveau {info.level}</div>
-            <div className="mt-0.5 text-xs text-zinc-500">
-              {info.into} / {info.need} XP vers le niveau {info.level + 1}
+      <div className="grid gap-4 lg:grid-cols-3 lg:gap-5">
+        {/* Colonne principale */}
+        <div className="space-y-4 lg:col-span-2 lg:space-y-5">
+          <section className="card card-volt relative overflow-hidden p-5">
+            <div className="tape absolute inset-x-0 top-0" />
+            <div className="mt-2 flex items-end justify-between gap-4">
+              <div>
+                <div className="eyebrow">Niveau</div>
+                <div className="hud text-5xl font-bold leading-none md:text-6xl">
+                  {String(info.level).padStart(2, '0')}
+                </div>
+                <div className="hud mt-2 text-[11px] text-mute">
+                  {info.into} / {info.need} XP vers le niveau {info.level + 1}
+                </div>
+              </div>
+              <div className="text-right">
+                <div className="hud text-2xl font-bold leading-none">
+                  {player.xpTotal.toLocaleString('fr-FR')}
+                </div>
+                <div className="eyebrow mt-1.5">XP total</div>
+              </div>
             </div>
-          </div>
-          <div className="text-right text-xs text-zinc-500">
-            {player.xpTotal.toLocaleString('fr-FR')} XP
-            <br />
-            total
-          </div>
-        </div>
-        <div className="mt-3 h-2.5 overflow-hidden rounded-full bg-zinc-800">
-          <div
-            className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-lime-400 transition-all"
-            style={{ width: `${info.pct}%` }}
-          />
-        </div>
-        {bonus > 0 && (
-          <div className="mt-3 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-xs text-emerald-300">
-            🔥 Bonus regularité actif : +{bonus}% XP sur chaque série (3 séances ces 7 derniers jours)
-          </div>
-        )}
-        <button
-          onClick={() => navigate('/workout')}
-          className="mt-4 w-full rounded-2xl bg-emerald-500 py-4 text-base font-bold text-zinc-950 active:scale-[0.98] transition-transform"
-        >
-          💪 Démarrer une séance
-        </button>
-      </section>
-
-      <section className="rounded-2xl border border-zinc-800 bg-zinc-900/60 p-4">
-        <h2 className="mb-3 text-sm font-bold uppercase tracking-wider text-zinc-400">Stats RPG</h2>
-        <div className="space-y-3">
-          {(Object.keys(player.stats) as StatKey[]).map((k) => (
-            <StatBar key={k} stat={k} xp={player.stats[k]} />
-          ))}
-        </div>
-      </section>
-
-      <section className="grid grid-cols-3 gap-2">
-        <div className="rounded-xl border border-zinc-800 bg-zinc-900/60 p-3 text-center">
-          <div className="text-lg font-black text-zinc-100">{workouts.length}</div>
-          <div className="text-[10px] text-zinc-500">séances</div>
-        </div>
-        <div className="rounded-xl border border-zinc-800 bg-zinc-900/60 p-3 text-center">
-          <div className="text-lg font-black text-zinc-100">{reps.toLocaleString('fr-FR')}</div>
-          <div className="text-[10px] text-zinc-500">répétitions</div>
-        </div>
-        <div className="rounded-xl border border-zinc-800 bg-zinc-900/60 p-3 text-center">
-          <div className="text-lg font-black text-zinc-100">{visited}</div>
-          <div className="text-[10px] text-zinc-500">spots visités</div>
-        </div>
-      </section>
-
-      <section>
-        <h2 className="mb-2 text-sm font-bold uppercase tracking-wider text-zinc-400">Quêtes du jour</h2>
-        <div className="space-y-2">
-          {daily.map((q) => (
-            <QuestRow key={q.id} quest={q} workouts={workouts} />
-          ))}
-        </div>
-      </section>
-
-      <section>
-        <h2 className="mb-2 text-sm font-bold uppercase tracking-wider text-zinc-400">Cette semaine</h2>
-        <div className="space-y-2">
-          {weekly.map((q) => (
-            <QuestRow key={q.id} quest={q} workouts={workouts} />
-          ))}
-        </div>
-      </section>
-
-      {boss && (
-        <section className="rounded-2xl border border-purple-500/30 bg-gradient-to-br from-purple-600/20 to-fuchsia-600/5 p-4">
-          <div className="flex items-center gap-2">
-            <span className="text-2xl">{boss.icon}</span>
-            <div>
-              <div className="text-sm font-bold text-purple-300">{boss.title}</div>
-              <div className="text-xs text-zinc-400">{boss.description}</div>
+            <div className="bar mt-4 h-3">
+              <div style={{ width: `${info.pct}%` }} />
             </div>
-          </div>
-          <div className="mt-3">
-            <QuestRow quest={boss} workouts={workouts} />
-          </div>
-        </section>
-      )}
+            {bonus > 0 && (
+              <div className="mt-4 flex items-center gap-2 text-xs">
+                <span className="sticker">+{bonus}% XP</span>
+                <span className="text-zinc-300">Bonus régularité actif (3 séances cette semaine)</span>
+              </div>
+            )}
+            <button onClick={() => navigate('/workout')} className="btn btn-volt mt-5 w-full py-4 text-base">
+              💪 Démarrer une séance
+            </button>
+          </section>
+
+          <section className="grid grid-cols-3 gap-2.5 md:gap-3">
+            <div className="stat">
+              <div className="hud text-xl font-bold">{workouts.length}</div>
+              <div className="eyebrow mt-1">séances</div>
+            </div>
+            <div className="stat">
+              <div className="hud text-xl font-bold">{reps.toLocaleString('fr-FR')}</div>
+              <div className="eyebrow mt-1">répétitions</div>
+            </div>
+            <div className="stat">
+              <div className="hud text-xl font-bold">{visited}</div>
+              <div className="eyebrow mt-1">spots visités</div>
+            </div>
+          </section>
+
+          <section className="card p-4">
+            <h2 className="eyebrow mb-3.5">Stats RPG</h2>
+            <div className="grid gap-4 md:grid-cols-2 md:gap-x-6">
+              {(Object.keys(player.stats) as StatKey[]).map((k) => (
+                <StatBar key={k} stat={k} xp={player.stats[k]} />
+              ))}
+            </div>
+          </section>
+        </div>
+
+        {/* Colonne latérale */}
+        <div className="space-y-4 lg:space-y-5">
+          {boss && (
+            <section className="card relative overflow-hidden p-4" style={{ borderColor: 'color-mix(in srgb, var(--color-ember) 45%, transparent)' }}>
+              <div
+                className="absolute inset-x-0 top-0 h-2"
+                style={{
+                  background:
+                    'repeating-linear-gradient(45deg, var(--color-ember) 0 8px, var(--color-ink) 8px 16px)'
+                }}
+              />
+              <div className="mt-2 flex items-center gap-2.5">
+                <span className="text-2xl">{boss.icon}</span>
+                <div className="min-w-0">
+                  <div className="eyebrow" style={{ color: 'var(--color-ember)' }}>
+                    Boss en cours
+                  </div>
+                  <div className="truncate font-display text-sm uppercase">{boss.title}</div>
+                </div>
+              </div>
+              <p className="mt-2 text-xs text-mute">{boss.description}</p>
+              <div className="mt-3">
+                <QuestRow quest={boss} workouts={workouts} />
+              </div>
+            </section>
+          )}
+
+          <section>
+            <h2 className="eyebrow mb-2.5">Quêtes du jour</h2>
+            <div className="space-y-2.5">
+              {daily.map((q) => (
+                <QuestRow key={q.id} quest={q} workouts={workouts} />
+              ))}
+            </div>
+          </section>
+
+          <section>
+            <h2 className="eyebrow mb-2.5">Cette semaine</h2>
+            <div className="space-y-2.5">
+              {weekly.map((q) => (
+                <QuestRow key={q.id} quest={q} workouts={workouts} />
+              ))}
+            </div>
+          </section>
+        </div>
+      </div>
     </div>
   )
 }

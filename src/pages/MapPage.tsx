@@ -122,27 +122,23 @@ export default function MapPage() {
   const selectedReviews = selectedId ? reviews.filter((r) => r.spotId === selectedId) : []
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-black">Spots</h1>
-        <button
-          onClick={locate}
-          className="rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-2 text-xs font-bold text-zinc-200"
-        >
+    <div className="space-y-5 md:space-y-6">
+      <header className="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <div className="eyebrow">Terrain</div>
+          <h1 className="mt-0.5 text-3xl uppercase md:text-4xl">Spots</h1>
+        </div>
+        <button onClick={locate} className="btn px-3.5 py-2.5 text-[11px]">
           📍 Ma position
         </button>
-      </div>
+      </header>
 
       <div className="flex flex-wrap gap-2">
         {(['all', 'parc', 'salle'] as const).map((t) => (
           <button
             key={t}
             onClick={() => setTypeFilter(t)}
-            className={`rounded-full border px-3 py-1.5 text-xs font-semibold ${
-              typeFilter === t
-                ? 'border-emerald-500 bg-emerald-500/15 text-emerald-300'
-                : 'border-zinc-800 bg-zinc-900/60 text-zinc-400'
-            }`}
+            className={`chip ${typeFilter === t ? 'chip-on' : ''}`}
           >
             {t === 'all' ? 'Tous' : `${SPOT_TYPE_META[t].icon} ${SPOT_TYPE_META[t].label}`}
           </button>
@@ -151,126 +147,126 @@ export default function MapPage() {
           <button
             key={r.value}
             onClick={() => setMinRating(r.value)}
-            className={`rounded-full border px-3 py-1.5 text-xs font-semibold ${
-              minRating === r.value
-                ? 'border-amber-500 bg-amber-500/15 text-amber-300'
-                : 'border-zinc-800 bg-zinc-900/60 text-zinc-400'
-            }`}
+            className={`chip ${minRating === r.value ? 'chip-on' : ''}`}
           >
             ★ {r.label}
           </button>
         ))}
-        <button
-          onClick={() => setNearMe((v) => !v)}
-          className={`rounded-full border px-3 py-1.5 text-xs font-semibold ${
-            nearMe ? 'border-sky-500 bg-sky-500/15 text-sky-300' : 'border-zinc-800 bg-zinc-900/60 text-zinc-400'
-          }`}
-        >
+        <button onClick={() => setNearMe((v) => !v)} className={`chip ${nearMe ? 'chip-on' : ''}`}>
           Près de moi (5 km)
         </button>
       </div>
 
-      <div className="overflow-hidden rounded-2xl border border-zinc-800">
-        <SpotMap
-          spots={filtered}
-          selectedId={selectedId}
-          ratingOf={ratingOf}
-          userPos={userPos}
-          focus={focus}
-          adding={adding}
-          onMapClick={(lat, lng) => setPending({ lat, lng })}
-          onSelect={(id) => setSelectedId(id)}
-          className="h-[48vh] w-full"
-        />
-      </div>
-
-      {adding ? (
-        <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-xs text-emerald-300">
-          👆 Touche la carte pour placer le spot.
-          <button onClick={() => setAdding(false)} className="ml-2 underline">
-            Annuler
-          </button>
-        </div>
-      ) : (
-        <button
-          onClick={() => {
-            setAdding(true)
-            setMessage(null)
-          }}
-          className="w-full rounded-2xl bg-emerald-500 py-3 font-bold text-zinc-950"
-        >
-          ➕ Ajouter un spot
-        </button>
-      )}
-
-      {message && <div className="text-xs text-zinc-400">{message}</div>}
-
-      <section className="space-y-2">
-        {filtered.length === 0 && (
-          <div className="rounded-2xl border border-dashed border-zinc-800 p-6 text-center text-sm text-zinc-500">
-            Aucun spot pour ces filtres. Ajoute ton parc ou ta salle préférée !
+      <div className="grid gap-5 lg:grid-cols-3 lg:gap-6">
+        <div className="space-y-4 lg:col-span-2 lg:sticky lg:top-8 lg:self-start">
+          <div className="card relative isolate overflow-hidden p-0">
+            <SpotMap
+              spots={filtered}
+              selectedId={selectedId}
+              ratingOf={ratingOf}
+              userPos={userPos}
+              focus={focus}
+              adding={adding}
+              onMapClick={(lat, lng) => setPending({ lat, lng })}
+              onSelect={(id) => setSelectedId(id)}
+              className="h-[50vh] w-full lg:h-[64vh]"
+            />
           </div>
-        )}
-        {filtered.map((s) => {
-          const r = ratingOf(s.id)
-          const count = reviews.filter((x) => x.spotId === s.id).length
-          return (
+
+          {adding ? (
+            <div className="card flex items-center gap-2 px-4 py-3 text-xs">
+              <span>👆</span>
+              <span className="flex-1 text-volt">Touche la carte pour placer le spot.</span>
+              <button onClick={() => setAdding(false)} className="underline text-mute">
+                Annuler
+              </button>
+            </div>
+          ) : (
             <button
-              key={s.id}
               onClick={() => {
-                setSelectedId(s.id)
-                setFocus({ lat: s.lat, lng: s.lng })
+                setAdding(true)
+                setMessage(null)
               }}
-              className="flex w-full items-center gap-3 rounded-2xl border border-zinc-800 bg-zinc-900/60 p-3 text-left"
+              className="btn btn-volt w-full py-3.5 text-sm"
             >
-              <span className="text-2xl">{SPOT_TYPE_META[s.type].icon}</span>
-              <span className="flex-1">
-                <span className="flex items-center gap-2 text-sm font-bold">
-                  {s.name}
-                  {visited.has(s.id) && (
-                    <span className="rounded-full bg-emerald-500/15 px-2 py-0.5 text-[10px] font-bold text-emerald-300">
-                      visité
-                    </span>
-                  )}
-                </span>
-                <span className="mt-0.5 flex items-center gap-2 text-[11px] text-zinc-500">
-                  <Stars value={r ?? 0} size="sm" />
-                  {r ? `${r.toFixed(1)} (${count} avis)` : 'Pas encore noté'}
-                  {userPos && ` · ${distanceKm(userPos.lat, userPos.lng, s.lat, s.lng).toFixed(1)} km`}
-                </span>
-              </span>
+              ➕ Ajouter un spot
             </button>
-          )
-        })}
-      </section>
+          )}
+
+          {message && <div className="text-xs text-mute">{message}</div>}
+        </div>
+
+        <section className="space-y-2.5">
+          <h2 className="eyebrow">
+            {filtered.length} spot{filtered.length > 1 ? 's' : ''}
+          </h2>
+          {filtered.length === 0 && (
+            <div className="card border-dashed p-6 text-center text-sm text-mute">
+              Aucun spot pour ces filtres. Ajoute ton parc ou ta salle préférée !
+            </div>
+          )}
+          {filtered.map((s) => {
+            const r = ratingOf(s.id)
+            const count = reviews.filter((x) => x.spotId === s.id).length
+            return (
+              <button
+                key={s.id}
+                onClick={() => {
+                  setSelectedId(s.id)
+                  setFocus({ lat: s.lat, lng: s.lng })
+                }}
+                className="card flex w-full items-center gap-3 p-3.5 text-left transition-colors hover:border-volt/60"
+              >
+                <span className="text-2xl">{SPOT_TYPE_META[s.type].icon}</span>
+                <span className="min-w-0 flex-1">
+                  <span className="flex flex-wrap items-center gap-2">
+                    <span className="truncate font-display text-sm uppercase">{s.name}</span>
+                    {visited.has(s.id) && <span className="sticker shrink-0">visité</span>}
+                  </span>
+                  <span className="mt-1 flex flex-wrap items-center gap-2 text-[11px] text-mute">
+                    <Stars value={r ?? 0} size="sm" />
+                    {r ? `${r.toFixed(1)} (${count} avis)` : 'Pas encore noté'}
+                    {userPos && ` · ${distanceKm(userPos.lat, userPos.lng, s.lat, s.lng).toFixed(1)} km`}
+                  </span>
+                </span>
+              </button>
+            )
+          })}
+        </section>
+      </div>
 
       {/* Sheet : ajout de spot */}
       {pending && (
-        <div className="fixed inset-0 z-50 flex items-end bg-black/60" onClick={() => setPending(null)}>
+        <div
+          className="fixed inset-0 z-50 flex items-end bg-black/70 md:items-center md:justify-center md:p-6"
+          onClick={() => setPending(null)}
+        >
           <div
-            className="mx-auto max-h-[85vh] w-full max-w-md overflow-y-auto rounded-t-3xl border-t border-zinc-800 bg-zinc-900 p-5"
+            className="animate-floaty mx-auto max-h-[85vh] w-full max-w-md overflow-y-auto rounded-t-3xl border-2 border-edge bg-panel p-5 md:rounded-3xl"
             onClick={(e) => e.stopPropagation()}
           >
-            <h2 className="text-lg font-black">Nouveau spot</h2>
-            <p className="mt-0.5 text-xs text-zinc-500">
-              Position : {pending.lat.toFixed(5)}, {pending.lng.toFixed(5)}
+            <div className="tape -mx-5 -mt-5 mb-4 rounded-t-3xl" />
+            <h2 className="text-xl uppercase">Nouveau spot</h2>
+            <p className="hud mt-1 text-[11px] text-mute">
+              {pending.lat.toFixed(5)}, {pending.lng.toFixed(5)}
             </p>
-            <div className="mt-4 space-y-3">
-              <input
-                value={formName}
-                onChange={(e) => setFormName(e.target.value)}
-                placeholder="Nom du spot (ex : Parc Wilson)"
-                className="w-full rounded-xl border border-zinc-800 bg-zinc-950 px-3 py-2.5 text-base outline-none focus:border-emerald-500"
-              />
-              <div className="grid grid-cols-2 gap-2">
+            <div className="mt-4 space-y-3.5">
+              <div>
+                <div className="eyebrow mb-2">Nom du spot</div>
+                <input
+                  value={formName}
+                  onChange={(e) => setFormName(e.target.value)}
+                  placeholder="Ex : Parc Wilson"
+                  className="input"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-2.5">
                 {(['parc', 'salle'] as const).map((t) => (
                   <button
                     key={t}
                     onClick={() => setFormType(t)}
-                    className={`rounded-xl border py-2.5 text-sm font-bold ${
-                      formType === t
-                        ? 'border-emerald-500 bg-emerald-500/15 text-emerald-300'
-                        : 'border-zinc-800 bg-zinc-950 text-zinc-400'
+                    className={`rounded-xl border-2 py-2.5 font-display text-xs uppercase transition-colors ${
+                      formType === t ? 'border-volt bg-volt/10 text-volt' : 'border-edge bg-panel-2 text-mute'
                     }`}
                   >
                     {SPOT_TYPE_META[t].icon} {SPOT_TYPE_META[t].label}
@@ -278,7 +274,7 @@ export default function MapPage() {
                 ))}
               </div>
               <div>
-                <div className="mb-1.5 text-xs font-semibold text-zinc-400">Équipements</div>
+                <div className="eyebrow mb-2">Équipements</div>
                 <div className="flex flex-wrap gap-1.5">
                   {EQUIPMENTS.map((eq) => {
                     const on = formEquipments.includes(eq)
@@ -290,11 +286,7 @@ export default function MapPage() {
                             prev.includes(eq) ? prev.filter((x) => x !== eq) : [...prev, eq]
                           )
                         }
-                        className={`rounded-full border px-2.5 py-1 text-[11px] font-medium ${
-                          on
-                            ? 'border-emerald-500/60 bg-emerald-500/15 text-emerald-300'
-                            : 'border-zinc-800 bg-zinc-950 text-zinc-400'
-                        }`}
+                        className={`chip text-[11px] ${on ? 'chip-on' : ''}`}
                       >
                         {eq}
                       </button>
@@ -303,7 +295,7 @@ export default function MapPage() {
                 </div>
               </div>
               <div>
-                <div className="mb-1.5 text-xs font-semibold text-zinc-400">Ta note (optionnel)</div>
+                <div className="eyebrow mb-2">Ta note (optionnel)</div>
                 <Stars value={formRating} onChange={setFormRating} size="lg" />
               </div>
               {formRating > 0 && (
@@ -312,21 +304,14 @@ export default function MapPage() {
                   onChange={(e) => setFormComment(e.target.value)}
                   placeholder="Un commentaire ? (optionnel)"
                   rows={2}
-                  className="w-full rounded-xl border border-zinc-800 bg-zinc-950 px-3 py-2.5 text-sm outline-none focus:border-emerald-500"
+                  className="input text-sm"
                 />
               )}
-              <div className="grid grid-cols-2 gap-2">
-                <button
-                  onClick={() => setPending(null)}
-                  className="rounded-2xl border border-zinc-700 bg-zinc-900 py-3 font-bold text-zinc-300"
-                >
+              <div className="grid grid-cols-2 gap-2.5 pt-1">
+                <button onClick={() => setPending(null)} className="btn py-3 text-xs">
                   Annuler
                 </button>
-                <button
-                  disabled={!formName.trim()}
-                  onClick={saveSpot}
-                  className="rounded-2xl bg-emerald-500 py-3 font-bold text-zinc-950 disabled:opacity-40"
-                >
+                <button disabled={!formName.trim()} onClick={saveSpot} className="btn btn-volt py-3 text-xs">
                   Enregistrer
                 </button>
               </div>
@@ -337,43 +322,43 @@ export default function MapPage() {
 
       {/* Sheet : détail du spot */}
       {selected && (
-        <div className="fixed inset-0 z-50 flex items-end bg-black/60" onClick={() => setSelectedId(null)}>
+        <div
+          className="fixed inset-0 z-50 flex items-end bg-black/70 md:items-center md:justify-center md:p-6"
+          onClick={() => setSelectedId(null)}
+        >
           <div
-            className="mx-auto max-h-[85vh] w-full max-w-md overflow-y-auto rounded-t-3xl border-t border-zinc-800 bg-zinc-900 p-5"
+            className="animate-floaty mx-auto max-h-[85vh] w-full max-w-md overflow-y-auto rounded-t-3xl border-2 border-edge bg-panel p-5 md:max-w-lg md:rounded-3xl"
             onClick={(e) => e.stopPropagation()}
           >
+            <div className="tape -mx-5 -mt-5 mb-4 rounded-t-3xl" />
             <div className="flex items-start gap-3">
               <span className="text-3xl">{SPOT_TYPE_META[selected.type].icon}</span>
-              <div className="flex-1">
-                <h2 className="text-lg font-black">{selected.name}</h2>
-                <div className="mt-0.5 flex items-center gap-2 text-xs text-zinc-500">
+              <div className="min-w-0 flex-1">
+                <h2 className="text-xl uppercase">{selected.name}</h2>
+                <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-mute">
                   <Stars value={ratingOf(selected.id) ?? 0} size="sm" />
                   {ratingOf(selected.id)
                     ? `${ratingOf(selected.id)!.toFixed(1)} · ${selectedReviews.length} avis`
                     : 'Pas encore noté'}
                 </div>
               </div>
-              {visited.has(selected.id) && (
-                <span className="rounded-full bg-emerald-500/15 px-2 py-0.5 text-[10px] font-bold text-emerald-300">
-                  visité
-                </span>
-              )}
+              {visited.has(selected.id) && <span className="sticker shrink-0">visité</span>}
             </div>
 
             {selected.equipments.length > 0 && (
               <div className="mt-3 flex flex-wrap gap-1.5">
                 {selected.equipments.map((eq) => (
-                  <span key={eq} className="rounded-full border border-zinc-800 bg-zinc-950 px-2.5 py-1 text-[11px] text-zinc-400">
+                  <span key={eq} className="chip text-[11px]">
                     {eq}
                   </span>
                 ))}
               </div>
             )}
 
-            <div className="mt-4 grid grid-cols-2 gap-2">
+            <div className="mt-4 grid grid-cols-2 gap-2.5">
               <button
                 onClick={() => navigate('/workout', { state: { spotId: selected.id } })}
-                className="rounded-2xl bg-emerald-500 py-3 text-sm font-bold text-zinc-950"
+                className="btn btn-volt py-3 text-xs"
               >
                 💪 S'entraîner ici
               </button>
@@ -384,45 +369,43 @@ export default function MapPage() {
                     setSelectedId(null)
                   }
                 }}
-                className="rounded-2xl border border-red-500/40 py-3 text-sm font-bold text-red-400"
+                className="btn btn-danger py-3 text-xs"
               >
                 🗑️ Supprimer
               </button>
             </div>
 
             <section className="mt-5">
-              <h3 className="mb-2 text-sm font-bold uppercase tracking-wider text-zinc-400">
-                Avis ({selectedReviews.length})
-              </h3>
-              <div className="space-y-2">
+              <h3 className="eyebrow mb-2.5">Avis ({selectedReviews.length})</h3>
+              <div className="space-y-2.5">
                 {selectedReviews.length === 0 && (
-                  <p className="text-xs text-zinc-500">Aucun avis. Sois le premier à noter ce spot !</p>
+                  <p className="text-xs text-mute">Aucun avis. Sois le premier à noter ce spot !</p>
                 )}
                 {selectedReviews.map((r) => (
-                  <div key={r.id} className="rounded-xl border border-zinc-800 bg-zinc-950 p-3">
+                  <div key={r.id} className="rounded-xl border-2 border-edge bg-panel-2 p-3">
                     <Stars value={r.rating} size="sm" />
-                    {r.comment && <p className="mt-1 text-xs text-zinc-300">{r.comment}</p>}
-                    <p className="mt-1 text-[10px] text-zinc-600">
+                    {r.comment && <p className="mt-1.5 text-xs text-zinc-300">{r.comment}</p>}
+                    <p className="hud mt-1.5 text-[10px] text-zinc-600">
                       {new Date(r.date).toLocaleDateString('fr-FR')}
                     </p>
                   </div>
                 ))}
               </div>
 
-              <div className="mt-4 rounded-xl border border-zinc-800 bg-zinc-950 p-3">
-                <div className="mb-1.5 text-xs font-semibold text-zinc-400">Ta note</div>
+              <div className="mt-4 rounded-xl border-2 border-edge bg-panel-2 p-3.5">
+                <div className="eyebrow mb-2">Ta note</div>
                 <Stars value={reviewRating} onChange={setReviewRating} size="lg" />
                 <textarea
                   value={reviewComment}
                   onChange={(e) => setReviewComment(e.target.value)}
                   placeholder="Ton avis (optionnel)"
                   rows={2}
-                  className="mt-2 w-full rounded-xl border border-zinc-800 bg-zinc-900 px-3 py-2.5 text-sm outline-none focus:border-emerald-500"
+                  className="input mt-2.5 text-sm"
                 />
                 <button
                   disabled={reviewRating < 1}
                   onClick={submitReview}
-                  className="mt-2 w-full rounded-xl bg-amber-500 py-2.5 text-sm font-bold text-zinc-950 disabled:opacity-40"
+                  className="btn btn-volt mt-2.5 w-full py-3 text-xs"
                 >
                   Publier mon avis (local)
                 </button>

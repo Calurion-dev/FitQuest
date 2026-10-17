@@ -1,14 +1,218 @@
 @import 'tailwindcss';
 
-html {
-  color-scheme: dark;
+/* ---------------------------------------------------------------
+   FitQuest — direction artistique « chantier street » :
+   noir d'encre, jaune volt (ruban de chantier), typo sticker,
+   ombres dures décalées (BD) plutôt que des ombres floues.
+   --------------------------------------------------------------- */
+@theme {
+  --font-sans: 'Archivo', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-display: 'Archivo Black', 'Archivo', system-ui, sans-serif;
+  --font-mono: 'Space Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
+
+  --color-ink: #0a0a0b;
+  --color-panel: #141416;
+  --color-panel-2: #1c1c20;
+  --color-edge: #2a2a30;
+  --color-volt: #f2e600;
+  --color-volt-dim: #7d7500;
+  --color-ember: #ff4b2b;
+  --color-ice: #7fd1ff;
+  --color-mute: #9a9aa3;
+
+  --shadow-hard: 5px 5px 0 0 #24242a;
+  --shadow-hard-sm: 4px 4px 0 0 #000;
 }
 
-body {
-  background: #09090b;
-  color: #f4f4f5;
-  -webkit-tap-highlight-color: transparent;
-  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+@layer base {
+  html {
+    color-scheme: dark;
+  }
+
+  body {
+    background: var(--color-ink);
+    color: #f4f4f2;
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-display);
+    letter-spacing: -0.01em;
+  }
+
+  :focus-visible {
+    outline: 3px solid var(--color-volt);
+    outline-offset: 2px;
+  }
+
+  ::selection {
+    background: var(--color-volt);
+    color: var(--color-ink);
+  }
+}
+
+@layer components {
+  /* ---------- Blocs ---------- */
+  .card {
+    border: 2px solid var(--color-edge);
+    border-radius: 16px;
+    background: var(--color-panel);
+    box-shadow: var(--shadow-hard);
+  }
+
+  .card-volt {
+    border-color: var(--color-volt);
+    box-shadow: 5px 5px 0 0 var(--color-volt-dim);
+  }
+
+  .eyebrow {
+    font-family: var(--font-display);
+    font-size: 11px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--color-mute);
+  }
+
+  /* Étiquette sticker : mot clé sur bloc jaune. */
+  .sticker {
+    display: inline-block;
+    background: var(--color-volt);
+    color: var(--color-ink);
+    font-family: var(--font-display);
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 3px 8px;
+    border-radius: 6px;
+  }
+
+  /* Ruban de chantier : séparateur signature. */
+  .tape {
+    height: 8px;
+    background: repeating-linear-gradient(
+      45deg,
+      var(--color-volt) 0 8px,
+      var(--color-ink) 8px 16px
+    );
+  }
+
+  /* ---------- Boutons ---------- */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    font-family: var(--font-display);
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    border: 2px solid var(--color-edge);
+    border-radius: 12px;
+    background: var(--color-panel-2);
+    color: #f4f4f2;
+    box-shadow: var(--shadow-hard-sm);
+    transition:
+      transform 0.08s ease,
+      box-shadow 0.08s ease,
+      background 0.12s ease;
+  }
+
+  .btn:active {
+    transform: translate(2px, 2px);
+    box-shadow: 2px 2px 0 0 #000;
+  }
+
+  .btn:disabled {
+    opacity: 0.4;
+  }
+
+  .btn-volt {
+    background: var(--color-volt);
+    color: var(--color-ink);
+    border-color: var(--color-ink);
+    box-shadow: 4px 4px 0 0 var(--color-volt-dim);
+  }
+
+  .btn-volt:active {
+    box-shadow: 2px 2px 0 0 var(--color-volt-dim);
+  }
+
+  .btn-danger {
+    color: var(--color-ember);
+    border-color: color-mix(in srgb, var(--color-ember) 45%, transparent);
+  }
+
+  /* ---------- Puces / filtres ---------- */
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    border: 2px solid var(--color-edge);
+    border-radius: 999px;
+    background: var(--color-panel);
+    padding: 0.4rem 0.75rem;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--color-mute);
+  }
+
+  .chip-on {
+    border-color: var(--color-volt);
+    background: color-mix(in srgb, var(--color-volt) 15%, transparent);
+    color: var(--color-volt);
+  }
+
+  /* ---------- Champs ---------- */
+  .input {
+    width: 100%;
+    border: 2px solid var(--color-edge);
+    border-radius: 12px;
+    background: #0f0f11;
+    padding: 0.7rem 0.9rem;
+    font-size: 1rem;
+    color: #f4f4f2;
+  }
+
+  .input::placeholder {
+    color: #6b6b74;
+  }
+
+  .input:focus {
+    border-color: var(--color-volt);
+    outline: none;
+  }
+
+  /* ---------- Données ---------- */
+  .hud {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .bar {
+    height: 10px;
+    overflow: hidden;
+    border-radius: 999px;
+    border: 2px solid #000;
+    background: #26262c;
+  }
+
+  .bar > div {
+    height: 100%;
+    border-radius: 999px;
+    background: var(--color-volt);
+    transition: width 0.3s ease;
+  }
+
+  .stat {
+    border: 2px solid var(--color-edge);
+    border-radius: 14px;
+    background: var(--color-panel);
+    padding: 0.6rem 0.5rem;
+    text-align: center;
+  }
 }
 
 .no-scrollbar::-webkit-scrollbar {
@@ -31,7 +235,7 @@ body {
   border-radius: 9999px;
   display: grid;
   place-items: center;
-  background: #18181b;
+  background: #141416;
   border: 2px solid #3f3f46;
   font-size: 18px;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
@@ -39,7 +243,8 @@ body {
 }
 
 .spot-marker--sel {
-  border-color: #22c55e;
+  border-color: var(--color-volt);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-volt) 35%, transparent);
   transform: scale(1.15);
 }
 
@@ -47,8 +252,9 @@ body {
   position: absolute;
   top: -10px;
   right: -12px;
-  background: #22c55e;
-  color: #09090b;
+  background: var(--color-volt);
+  color: var(--color-ink);
+  font-family: var(--font-mono);
   font-size: 10px;
   font-weight: 700;
   border-radius: 9999px;
@@ -56,7 +262,7 @@ body {
 }
 
 .leaflet-container {
-  background: #09090b;
+  background: #0a0a0b;
   font-family: inherit;
 }
 
@@ -102,4 +308,14 @@ body {
 
 .animate-floaty {
   animation: floaty 0.25s ease-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }

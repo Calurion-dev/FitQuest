@@ -24,8 +24,8 @@ export default defineConfig(({ command }) => {
           description:
             'Gamifie ton street workout : XP, niveaux, quêtes, boss et carte des spots.',
           lang: 'fr',
-          theme_color: '#0a0e13',
-          background_color: '#0a0e13',
+          theme_color: '#0a0a0b',
+          background_color: '#0a0a0b',
           display: 'standalone',
           // Relatif au manifest (qui est servi depuis la base) : fonctionne
           // aussi bien sur GitHub Pages que sur un domaine racine.
@@ -34,6 +34,20 @@ export default defineConfig(({ command }) => {
           icons: [
             { src: 'icon.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'any' },
             { src: 'icon.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'maskable' }
+          ]
+        },
+        workbox: {
+          // Les polices Google sont mises en cache : l'app reste belle hors-ligne.
+          runtimeCaching: [
+            {
+              urlPattern: /^https:\/\/fonts\.(googleapis|gstatic)\.com\/.*/i,
+              handler: 'CacheFirst',
+              options: {
+                cacheName: 'google-fonts',
+                expiration: { maxEntries: 20, maxAgeSeconds: 60 * 60 * 24 * 365 },
+                cacheableResponse: { statuses: [0, 200] }
+              }
+            }
           ]
         }
       })

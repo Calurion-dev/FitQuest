@@ -134,97 +134,99 @@ export default function WorkoutPage() {
   // ---------- Écran LOOT ----------
   if (phase === 'done' && loot) {
     return (
-      <div className="animate-floaty space-y-4">
+      <div className="animate-floaty mx-auto max-w-2xl space-y-4">
         <div className="text-center">
           <div className="text-5xl">🏆</div>
-          <h1 className="mt-2 text-2xl font-black">Séance terminée</h1>
+          <h1 className="mt-2 text-3xl uppercase">Séance terminée</h1>
         </div>
 
-        <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/10 p-5 text-center">
-          <div className="text-4xl font-black text-emerald-400">+{loot.xpTotal} XP</div>
-          <div className="mt-3 space-y-1 text-left text-xs text-zinc-300">
+        <div className="card card-volt relative overflow-hidden p-5 text-center">
+          <div className="tape absolute inset-x-0 top-0" />
+          <div className="eyebrow mt-2">XP gagné</div>
+          <div className="hud mt-1 text-5xl font-bold leading-none">+{loot.xpTotal}</div>
+          <div className="mt-4 space-y-1.5 border-t-2 border-dashed border-edge pt-3 text-left text-xs">
             <div className="flex justify-between">
-              <span>Séries ({loot.setCount})</span>
-              <span>+{loot.xpBase} XP</span>
+              <span className="text-mute">Séries ({loot.setCount})</span>
+              <span className="hud font-bold">+{loot.xpBase} XP</span>
             </div>
             {loot.xpQuests > 0 && (
               <div className="flex justify-between">
-                <span>Quêtes accomplies</span>
-                <span>+{loot.xpQuests} XP</span>
+                <span className="text-mute">Quêtes accomplies</span>
+                <span className="hud font-bold">+{loot.xpQuests} XP</span>
               </div>
             )}
             {loot.xpSpotBonus > 0 && (
               <div className="flex justify-between">
-                <span>Bonus explorateur (nouveau spot)</span>
-                <span>+{loot.xpSpotBonus} XP</span>
+                <span className="text-mute">Bonus explorateur (nouveau spot)</span>
+                <span className="hud font-bold">+{loot.xpSpotBonus} XP</span>
               </div>
             )}
             {loot.bonusPercent > 0 && (
-              <div className="flex justify-between text-emerald-300">
-                <span>Bonus régularité inclus</span>
-                <span>+{loot.bonusPercent}%</span>
+              <div className="flex justify-between">
+                <span className="text-mute">Bonus régularité inclus</span>
+                <span className="hud font-bold">+{loot.bonusPercent}%</span>
               </div>
             )}
           </div>
         </div>
 
         {loot.levelAfter > loot.levelBefore && (
-          <div className="animate-pop rounded-2xl border border-purple-500/40 bg-purple-600/20 p-4 text-center">
+          <div className="animate-pop card border-volt bg-volt/10 p-4 text-center">
             <div className="text-3xl">⬆️</div>
-            <div className="text-lg font-black text-purple-300">
+            <div className="mt-1 font-display text-lg uppercase text-volt">
               Niveau {loot.levelAfter} atteint !
             </div>
           </div>
         )}
 
         {loot.statLevelUps.map((s) => (
-          <div key={s.stat} className="rounded-xl border border-sky-500/30 bg-sky-500/10 px-3 py-2 text-sm">
-            {STAT_META[s.stat].icon} {STAT_META[s.stat].label} passe niveau {s.after}
+          <div key={s.stat} className="card flex items-center gap-3 px-4 py-3 text-sm">
+            <span className="text-lg">{STAT_META[s.stat].icon}</span>
+            <span className="flex-1 font-semibold">{STAT_META[s.stat].label}</span>
+            <span className="hud text-xs font-bold text-ice">passe niveau {s.after}</span>
           </div>
         ))}
 
         {loot.questsCompleted.map((q) => (
-          <div key={q.id} className="rounded-xl border border-emerald-500/30 bg-zinc-900/60 px-3 py-2 text-sm">
-            <span className="mr-1">{q.icon}</span>
-            Quête accomplie : <span className="font-semibold">{q.title}</span>{' '}
-            <span className="text-emerald-400">+{q.rewardXp} XP</span>
+          <div key={q.id} className="card flex items-center gap-3 px-4 py-3 text-sm">
+            <span className="text-lg">{q.icon}</span>
+            <span className="flex-1">
+              Quête accomplie : <span className="font-semibold">{q.title}</span>
+            </span>
+            <span className="hud text-xs font-bold text-volt">+{q.rewardXp} XP</span>
           </div>
         ))}
 
         {loot.badgesUnlocked.map((b) => (
-          <div key={b.id} className="animate-pop rounded-xl border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-sm">
-            <span className="mr-1 text-lg">{b.icon}</span>
-            <span className="font-semibold text-amber-300">Badge débloqué : {b.name}</span>
-            <div className="text-xs text-zinc-400">{b.description}</div>
+          <div key={b.id} className="animate-pop card border-volt bg-volt/10 px-4 py-3">
+            <div className="flex items-center gap-2">
+              <span className="text-xl">{b.icon}</span>
+              <span className="font-display text-sm uppercase text-volt">Badge débloqué : {b.name}</span>
+            </div>
+            <div className="mt-1 text-xs text-mute">{b.description}</div>
           </div>
         ))}
 
-        <div className="grid grid-cols-3 gap-2 text-center">
-          <div className="rounded-xl border border-zinc-800 bg-zinc-900/60 p-3">
-            <div className="text-sm font-black">{formatDuration(loot.durationSec)}</div>
-            <div className="text-[10px] text-zinc-500">durée</div>
+        <div className="grid grid-cols-3 gap-2.5">
+          <div className="stat">
+            <div className="hud text-sm font-bold">{formatDuration(loot.durationSec)}</div>
+            <div className="eyebrow mt-1">durée</div>
           </div>
-          <div className="rounded-xl border border-zinc-800 bg-zinc-900/60 p-3">
-            <div className="text-sm font-black">{loot.totalReps}</div>
-            <div className="text-[10px] text-zinc-500">répétitions</div>
+          <div className="stat">
+            <div className="hud text-sm font-bold">{loot.totalReps}</div>
+            <div className="eyebrow mt-1">répétitions</div>
           </div>
-          <div className="rounded-xl border border-zinc-800 bg-zinc-900/60 p-3">
-            <div className="text-sm font-black text-orange-400">🔥 {loot.streakDays} j</div>
-            <div className="text-[10px] text-zinc-500">streak</div>
+          <div className="stat">
+            <div className="hud text-sm font-bold text-ember">🔥 {loot.streakDays}</div>
+            <div className="eyebrow mt-1">jours</div>
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-2">
-          <button
-            onClick={restart}
-            className="rounded-2xl border border-zinc-700 bg-zinc-900 py-3 font-bold text-zinc-200"
-          >
+        <div className="grid grid-cols-2 gap-2.5">
+          <button onClick={restart} className="btn py-3.5 text-xs">
             Nouvelle séance
           </button>
-          <button
-            onClick={() => navigate('/')}
-            className="rounded-2xl bg-emerald-500 py-3 font-bold text-zinc-950"
-          >
+          <button onClick={() => navigate('/')} className="btn btn-volt py-3.5 text-xs">
             Retour au héros
           </button>
         </div>
@@ -236,219 +238,241 @@ export default function WorkoutPage() {
   if (phase === 'setup') {
     return (
       <div className="space-y-5">
-        <h1 className="text-2xl font-black">Nouvelle séance</h1>
+        <header>
+          <div className="eyebrow">Composer</div>
+          <h1 className="mt-0.5 text-3xl uppercase md:text-4xl">Nouvelle séance</h1>
+        </header>
+
         {spot && (
-          <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-300">
-            {SPOT_TYPE_META[spot.type].icon} Spot sélectionné : <span className="font-semibold">{spot.name}</span>
+          <div className="card flex items-center gap-2 px-4 py-3 text-sm">
+            <span>{SPOT_TYPE_META[spot.type].icon}</span>
+            <span className="text-mute">Spot :</span>
+            <span className="font-semibold text-volt">{spot.name}</span>
           </div>
         )}
 
-        <section>
-          <h2 className="mb-2 text-sm font-bold uppercase tracking-wider text-zinc-400">Type de séance</h2>
-          <div className="grid grid-cols-3 gap-2">
-            {TEMPLATES.map((t) => (
-              <button
-                key={t.id}
-                onClick={() => chooseTemplate(t.id)}
-                className={`rounded-xl border px-2 py-3 text-center text-xs font-semibold transition-colors ${
-                  templateId === t.id
-                    ? 'border-emerald-500 bg-emerald-500/15 text-emerald-300'
-                    : 'border-zinc-800 bg-zinc-900/60 text-zinc-400'
-                }`}
-              >
-                <div className="text-xl">{t.icon}</div>
-                {t.label}
-              </button>
-            ))}
-          </div>
-        </section>
+        <div className="grid gap-5 lg:grid-cols-3 lg:gap-6">
+          <div className="space-y-5 lg:col-span-2">
+            <section>
+              <h2 className="eyebrow mb-2.5">Type de séance</h2>
+              <div className="grid grid-cols-3 gap-2.5 sm:grid-cols-5">
+                {TEMPLATES.map((t) => {
+                  const on = templateId === t.id
+                  return (
+                    <button
+                      key={t.id}
+                      onClick={() => chooseTemplate(t.id)}
+                      className={`flex flex-col items-center gap-1.5 rounded-2xl border-2 px-2 py-3.5 font-display text-[11px] uppercase transition-colors ${
+                        on
+                          ? 'border-volt bg-volt/10 text-volt shadow-[4px_4px_0_0_var(--color-volt-dim)]'
+                          : 'border-edge bg-panel text-mute hover:border-zinc-600'
+                      }`}
+                    >
+                      <span className="text-xl">{t.icon}</span>
+                      {t.label}
+                    </button>
+                  )
+                })}
+              </div>
+            </section>
 
-        <section>
-          <h2 className="mb-2 text-sm font-bold uppercase tracking-wider text-zinc-400">
-            Mouvements ({selected.length})
-          </h2>
-          <div className="space-y-2">
-            {MOVEMENTS.map((m) => {
-              const on = selected.includes(m.id)
-              return (
-                <button
-                  key={m.id}
-                  onClick={() => toggleMovement(m.id)}
-                  className={`flex w-full items-center gap-3 rounded-xl border px-3 py-2.5 text-left transition-colors ${
-                    on ? 'border-emerald-500/60 bg-emerald-500/10' : 'border-zinc-800 bg-zinc-900/60 opacity-60'
-                  }`}
+            <section>
+              <h2 className="eyebrow mb-2.5">Mouvements ({selected.length})</h2>
+              <div className="grid gap-2.5 md:grid-cols-2">
+                {MOVEMENTS.map((m) => {
+                  const on = selected.includes(m.id)
+                  return (
+                    <button
+                      key={m.id}
+                      onClick={() => toggleMovement(m.id)}
+                      className={`flex items-center gap-3 rounded-2xl border-2 px-3.5 py-3 text-left transition-colors ${
+                        on
+                          ? 'border-volt/60 bg-volt/10'
+                          : 'border-edge bg-panel/60 opacity-55 hover:opacity-80'
+                      }`}
+                    >
+                      <span className="text-2xl">{m.emoji}</span>
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate text-sm font-semibold">{m.name}</span>
+                        <span className="hud block text-[11px] text-mute">
+                          {FAMILY_LABELS[m.family]} · {m.coeff} XP/{m.isHold ? 'sec' : 'rep'}
+                        </span>
+                      </span>
+                      <span className={`font-display text-lg ${on ? 'text-volt' : 'text-zinc-600'}`}>
+                        {on ? '✓' : '+'}
+                      </span>
+                    </button>
+                  )
+                })}
+              </div>
+            </section>
+          </div>
+
+          <div className="space-y-4 lg:sticky lg:top-8 lg:self-start">
+            {spots.length > 0 ? (
+              <section className="card p-4">
+                <h2 className="eyebrow mb-2.5">Spot (optionnel)</h2>
+                <select
+                  value={spotId ?? ''}
+                  onChange={(e) => setSpotId(e.target.value || undefined)}
+                  className="input"
                 >
-                  <span className="text-xl">{m.emoji}</span>
-                  <span className="flex-1">
-                    <span className="block text-sm font-semibold">{m.name}</span>
-                    <span className="block text-[11px] text-zinc-500">
-                      {FAMILY_LABELS[m.family]} · {m.coeff} XP/{m.isHold ? 'sec' : 'rep'}
-                    </span>
-                  </span>
-                  <span className={`text-lg ${on ? 'text-emerald-400' : 'text-zinc-600'}`}>{on ? '✓' : '+'}</span>
-                </button>
-              )
-            })}
+                  <option value="">Aucun spot</option>
+                  {spots.map((s) => (
+                    <option key={s.id} value={s.id}>
+                      {SPOT_TYPE_META[s.type].icon} {s.name}
+                    </option>
+                  ))}
+                </select>
+              </section>
+            ) : null}
+
+            <button disabled={!selected.length} onClick={start} className="btn btn-volt w-full py-4 text-base">
+              ▶️ Démarrer la séance
+            </button>
+            <p className="text-center text-[11px] leading-relaxed text-zinc-600">
+              {selected.length} mouvement{selected.length > 1 ? 's' : ''} · repos de {settings.restSec}s
+              entre les séries
+            </p>
           </div>
-        </section>
-
-        {spots.length > 0 && (
-          <section>
-            <h2 className="mb-2 text-sm font-bold uppercase tracking-wider text-zinc-400">Spot (optionnel)</h2>
-            <select
-              value={spotId ?? ''}
-              onChange={(e) => setSpotId(e.target.value || undefined)}
-              className="w-full rounded-xl border border-zinc-800 bg-zinc-900 px-3 py-3 text-base outline-none focus:border-emerald-500"
-            >
-              <option value="">Aucun spot</option>
-              {spots.map((s) => (
-                <option key={s.id} value={s.id}>
-                  {SPOT_TYPE_META[s.type].icon} {s.name}
-                </option>
-              ))}
-            </select>
-          </section>
-        )}
-
-        <button
-          disabled={!selected.length}
-          onClick={start}
-          className="w-full rounded-2xl bg-emerald-500 py-4 text-base font-bold text-zinc-950 disabled:opacity-40"
-        >
-          ▶️ Démarrer la séance
-        </button>
+        </div>
       </div>
     )
   }
 
   // ---------- Écran ACTIVE ----------
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between text-sm">
-        <span className="font-mono text-lg font-bold text-zinc-200">⏱ {secondsToClock(elapsed)}</span>
-        <span className="font-bold text-emerald-400">+{liveXp} XP</span>
-        {spot && <span className="text-xs text-zinc-500">{SPOT_TYPE_META[spot.type].icon} {spot.name}</span>}
+    <div className="space-y-4 md:space-y-5">
+      <div className="card flex items-center justify-between gap-3 px-4 py-3">
+        <span className="hud text-2xl font-bold leading-none">⏱ {secondsToClock(elapsed)}</span>
+        <span className="hud text-sm font-bold text-volt">+{liveXp} XP</span>
+        {spot && (
+          <span className="hidden items-center gap-1.5 text-xs text-mute sm:flex">
+            {SPOT_TYPE_META[spot.type].icon} {spot.name}
+          </span>
+        )}
       </div>
 
-      <div className="no-scrollbar flex gap-2 overflow-x-auto pb-1">
-        {selected.map((id) => {
-          const m = movementById(id)
-          if (!m) return null
-          const count = sets.filter((s) => s.movementId === id).length
-          return (
-            <button
-              key={id}
-              onClick={() => pickMovement(id)}
-              className={`flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-2 text-xs font-semibold ${
-                current === id ? 'border-emerald-500 bg-emerald-500/15 text-emerald-300' : 'border-zinc-800 bg-zinc-900/60 text-zinc-400'
-              }`}
-            >
-              {m.emoji} {m.name}
-              {count > 0 && <span className="rounded-full bg-zinc-800 px-1.5 text-[10px]">{count}</span>}
-            </button>
-          )
-        })}
-      </div>
-
-      {currentMovement && (
-        <div className="rounded-2xl border border-zinc-800 bg-zinc-900/60 p-5 text-center">
-          <div className="text-3xl">{currentMovement.emoji}</div>
-          <div className="mt-1 text-sm font-semibold text-zinc-300">{currentMovement.name}</div>
-          <div className="my-2 text-6xl font-black tabular-nums text-zinc-50">{amount}</div>
-          <div className="text-[11px] uppercase tracking-widest text-zinc-500">
-            {currentMovement.isHold ? 'secondes' : 'répétitions'}
-          </div>
-          <div className="mt-4 grid grid-cols-4 gap-2">
-            {[-5, -1, 1, 5].map((d) => (
-              <button
-                key={d}
-                onClick={() => setAmount((a) => Math.max(1, Math.min(600, a + d)))}
-                className="rounded-xl border border-zinc-700 bg-zinc-800 py-3 text-base font-bold text-zinc-100 active:bg-zinc-700"
-              >
-                {d > 0 ? `+${d}` : d}
-              </button>
-            ))}
-          </div>
-          <button
-            onClick={validateSet}
-            className="mt-3 w-full rounded-2xl bg-emerald-500 py-4 text-base font-bold text-zinc-950 active:scale-[0.98] transition-transform"
-          >
-            ✓ Valider la série
-          </button>
-        </div>
-      )}
-
-      {restLeft !== null && (
-        <div className="animate-floaty rounded-2xl border border-sky-500/30 bg-sky-500/10 p-4 text-center">
-          {restLeft > 0 ? (
-            <>
-              <div className="text-[11px] uppercase tracking-widest text-sky-300">Repos</div>
-              <div className="font-mono text-4xl font-black text-sky-200">{restLeft}s</div>
-              <div className="mt-3 flex justify-center gap-2">
-                <button
-                  onClick={() => setRestEndsAt((e) => (e ? e + 30000 : e))}
-                  className="rounded-xl border border-sky-500/40 px-4 py-2 text-sm font-semibold text-sky-200"
-                >
-                  +30s
-                </button>
-                <button
-                  onClick={() => setRestEndsAt(null)}
-                  className="rounded-xl bg-sky-500 px-4 py-2 text-sm font-bold text-zinc-950"
-                >
-                  Passer
-                </button>
-              </div>
-            </>
-          ) : (
-            <button onClick={() => setRestEndsAt(null)} className="w-full text-base font-black text-emerald-300">
-              💥 C'est reparti !
-            </button>
-          )}
-        </div>
-      )}
-
-      {sets.length > 0 && (
-        <section>
-          <h2 className="mb-2 text-sm font-bold uppercase tracking-wider text-zinc-400">
-            Séries ({sets.length})
-          </h2>
-          <div className="space-y-1.5">
-            {sets.map((s, i) => {
-              const m = movementById(s.movementId)
+      <div className="grid gap-4 lg:grid-cols-3 lg:gap-5">
+        <div className="space-y-4 lg:col-span-2">
+          <div className="no-scrollbar -mx-4 flex gap-2 overflow-x-auto px-4 pb-1 lg:mx-0 lg:flex-wrap lg:px-0">
+            {selected.map((id) => {
+              const m = movementById(id)
+              if (!m) return null
+              const count = sets.filter((s) => s.movementId === id).length
+              const on = current === id
               return (
-                <div key={s.id} className="flex items-center gap-3 rounded-xl border border-zinc-800 bg-zinc-900/60 px-3 py-2 text-sm">
-                  <span className="text-xs text-zinc-500">#{i + 1}</span>
-                  <span>{m?.emoji}</span>
-                  <span className="flex-1 font-medium">{m?.name}</span>
-                  <span className="font-bold tabular-nums">
-                    {s.reps ?? s.seconds}
-                    {m?.isHold ? 's' : ''}
-                  </span>
-                  <span className="text-xs font-semibold text-emerald-400">+{setXp(s)} XP</span>
-                  <button
-                    onClick={() => setSets((prev) => prev.filter((x) => x.id !== s.id))}
-                    className="text-zinc-600 hover:text-red-400"
-                    aria-label="Supprimer la série"
-                  >
-                    ✕
-                  </button>
-                </div>
+                <button
+                  key={id}
+                  onClick={() => pickMovement(id)}
+                  className={`chip shrink-0 text-xs ${on ? 'chip-on' : ''}`}
+                >
+                  {m.emoji} {m.name}
+                  {count > 0 && (
+                    <span className={`hud rounded-full px-1.5 text-[10px] ${on ? 'bg-volt text-ink' : 'bg-panel-2'}`}>
+                      {count}
+                    </span>
+                  )}
+                </button>
               )
             })}
           </div>
-        </section>
-      )}
 
-      <button
-        disabled={!sets.length}
-        onClick={finish}
-        className="w-full rounded-2xl bg-zinc-100 py-4 text-base font-black text-zinc-950 disabled:opacity-40"
-      >
-        🏁 Terminer la séance
-      </button>
-      <button onClick={restart} className="w-full py-2 text-xs text-zinc-500">
-        Abandonner la séance (rien ne sera enregistré)
-      </button>
+          {currentMovement && (
+            <div className="card p-5 text-center md:p-6">
+              <div className="text-3xl">{currentMovement.emoji}</div>
+              <div className="eyebrow mt-2">{currentMovement.name}</div>
+              <div className="hud my-3 text-6xl font-bold leading-none md:text-7xl">{amount}</div>
+              <div className="eyebrow">{currentMovement.isHold ? 'secondes' : 'répétitions'}</div>
+              <div className="mx-auto mt-5 grid max-w-md grid-cols-4 gap-2">
+                {[-5, -1, 1, 5].map((d) => (
+                  <button
+                    key={d}
+                    onClick={() => setAmount((a) => Math.max(1, Math.min(600, a + d)))}
+                    className="hud rounded-xl border-2 border-edge bg-panel-2 py-3 text-base font-bold active:translate-y-0.5"
+                  >
+                    {d > 0 ? `+${d}` : d}
+                  </button>
+                ))}
+              </div>
+              <button onClick={validateSet} className="btn btn-volt mx-auto mt-4 w-full max-w-md py-4 text-base">
+                ✓ Valider la série
+              </button>
+            </div>
+          )}
+
+          {sets.length > 0 && (
+            <section>
+              <h2 className="eyebrow mb-2.5">Séries ({sets.length})</h2>
+              <div className="space-y-2">
+                {sets.map((s, i) => {
+                  const m = movementById(s.movementId)
+                  return (
+                    <div key={s.id} className="card flex items-center gap-3 px-3.5 py-2.5 text-sm">
+                      <span className="hud text-[11px] text-zinc-500">#{String(i + 1).padStart(2, '0')}</span>
+                      <span>{m?.emoji}</span>
+                      <span className="min-w-0 flex-1 truncate font-medium">{m?.name}</span>
+                      <span className="hud font-bold">
+                        {s.reps ?? s.seconds}
+                        {m?.isHold ? 's' : ''}
+                      </span>
+                      <span className="hud text-xs font-bold text-volt">+{setXp(s)}</span>
+                      <button
+                        onClick={() => setSets((prev) => prev.filter((x) => x.id !== s.id))}
+                        className="px-1 text-zinc-600 hover:text-ember"
+                        aria-label="Supprimer la série"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  )
+                })}
+              </div>
+            </section>
+          )}
+        </div>
+
+        <div className="space-y-4 lg:sticky lg:top-8 lg:self-start">
+          {restLeft !== null && (
+            <div className="animate-floaty card border-ice/40 p-4 text-center">
+              {restLeft > 0 ? (
+                <>
+                  <div className="eyebrow" style={{ color: 'var(--color-ice)' }}>
+                    Repos
+                  </div>
+                  <div className="hud mt-1 text-5xl font-bold leading-none text-ice">{restLeft}s</div>
+                  <div className="mt-4 flex justify-center gap-2">
+                    <button
+                      onClick={() => setRestEndsAt((e) => (e ? e + 30000 : e))}
+                      className="btn px-3.5 py-2.5 text-[11px]"
+                    >
+                      +30s
+                    </button>
+                    <button
+                      onClick={() => setRestEndsAt(null)}
+                      className="btn px-3.5 py-2.5 text-[11px]"
+                      style={{ background: 'var(--color-ice)', color: 'var(--color-ink)', borderColor: 'var(--color-ink)' }}
+                    >
+                      Passer
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <button onClick={() => setRestEndsAt(null)} className="w-full font-display text-base uppercase text-volt">
+                  💥 C'est reparti !
+                </button>
+              )}
+            </div>
+          )}
+
+          <button disabled={!sets.length} onClick={finish} className="btn w-full py-4 text-base">
+            🏁 Terminer la séance
+          </button>
+          <button onClick={restart} className="w-full py-1 text-center text-[11px] text-zinc-600 underline">
+            Abandonner (rien ne sera enregistré)
+          </button>
+        </div>
+      </div>
     </div>
   )
 }

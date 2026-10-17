@@ -1,3 +1,9 @@
+const SIZES = {
+  sm: 'text-sm',
+  md: 'text-lg',
+  lg: 'text-3xl'
+} as const
+
 export function Stars({
   value,
   onChange,
@@ -9,29 +15,30 @@ export function Stars({
   size?: 'sm' | 'md' | 'lg'
   className?: string
 }) {
-  const textSize = size === 'lg' ? 'text-3xl' : size === 'sm' ? 'text-sm' : 'text-lg'
   return (
-    <div className={`flex items-center gap-0.5 ${className ?? ''}`}>
-      {[1, 2, 3, 4, 5].map((i) =>
-        onChange ? (
+    <span className={`inline-flex gap-0.5 ${className ?? ''}`}>
+      {[1, 2, 3, 4, 5].map((i) => {
+        const on = value >= i - 0.5
+        const cls = `${SIZES[size]} leading-none transition-transform ${on ? 'text-volt' : 'text-zinc-700'}`
+        if (!onChange) {
+          return (
+            <span key={i} className={cls} aria-hidden="true">
+              ★
+            </span>
+          )
+        }
+        return (
           <button
             key={i}
             type="button"
             onClick={() => onChange(i)}
             aria-label={`${i} étoile${i > 1 ? 's' : ''}`}
-            className={`${textSize} leading-none ${value >= i - 0.5 ? 'text-amber-400' : 'text-zinc-600'} active:scale-90 transition-transform`}
+            className={`${cls} active:scale-90`}
           >
             ★
           </button>
-        ) : (
-          <span
-            key={i}
-            className={`${textSize} leading-none ${value >= i - 0.5 ? 'text-amber-400' : 'text-zinc-600'}`}
-          >
-            ★
-          </span>
         )
-      )}
-    </div>
+      })}
+    </span>
   )
 }
