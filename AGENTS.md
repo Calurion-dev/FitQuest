@@ -15,6 +15,21 @@ git -c credential.helper= -c credential.helper="!gh auth git-credential" push ht
 
 Si le push est refusé (historique distant modifié), faire `git fetch https://github.com/Calurion-dev/FitQuest.git main:refs/remotes/fq/main` puis rebaser sur `fq/main` (ne jamais forcer un push qui écraserait du travail existant).
 
+## Déploiement GitHub Pages (règle permanente)
+
+**Après chaque modification poussée sur `main`, déployer la nouvelle version en ligne.**
+
+```powershell
+npm run deploy   # build + push de dist/ sur la branche gh-pages
+```
+
+- App en ligne : https://calurion-dev.github.io/FitQuest/
+- Pages est configuré en mode `legacy` sur la branche `gh-pages` (racine `/`), pas via GitHub Actions.
+- Raison : le token `gh` local n'a **pas** le scope `workflow`, donc impossible de pousser un fichier dans `.github/workflows/`. Si le scope est ajouté un jour (`gh auth refresh -h github.com -s workflow`), on pourra basculer sur un workflow Actions (déploiement automatique à chaque push) et remplacer `scripts/deploy-pages.mjs`.
+- Si Pages ne redéploie pas : `gh api -X POST repos/Calurion-dev/FitQuest/pages/builds` (ou relancer `npm run deploy`).
+- `vite.config.ts` définit `base: '/FitQuest/'` **au build uniquement** (en dev on reste à `/`) et un manifest PWA relatif (`start_url`/`scope` = `.`). Ne pas casser ça : les assets seraient en 404 sous le sous-chemin.
+
+
 ## Avant chaque commit
 
 ```powershell

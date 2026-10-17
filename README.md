@@ -4,6 +4,8 @@ FitQuest transforme le sport en un jeu d'aventure captivant. Relevé des défis 
 
 > **État actuel — v0.1 (MVP)** : app web solo/offline centrée sur le street workout. Les duels entre amis, le classement en ligne et l'avatar évolutif sont prévus en V2.
 
+**▶️ App en ligne : https://calurion-dev.github.io/FitQuest/**
+
 ## Ce que fait la v0.1
 
 - **Héros** : pseudo, niveau global (courbe `100 × niveau^1.5`), barre XP, streak 🔥, 4 stats RPG (Push / Pull / Jambes / Endurance), quêtes du jour + de la semaine, boss du mois.
