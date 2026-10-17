@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import { Route, Routes } from 'react-router-dom'
 import Layout from './components/Layout'
 import Home from './pages/Home'
+import Leaderboard from './pages/Leaderboard'
 import MapPage from './pages/MapPage'
 import Progress from './pages/Progress'
 import Settings from './pages/Settings'
@@ -22,6 +23,7 @@ export default function App() {
         <Route path="workout" element={<WorkoutPage />} />
         <Route path="map" element={<MapPage />} />
         <Route path="progress" element={<Progress />} />
+        <Route path="leaderboard" element={<Leaderboard />} />
         <Route path="settings" element={<Settings />} />
       </Route>
     </Routes>

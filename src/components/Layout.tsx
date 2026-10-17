@@ -5,6 +5,7 @@ const TABS = [
   { to: '/workout', label: 'Séance', icon: '💪' },
   { to: '/map', label: 'Spots', icon: '🗺️' },
   { to: '/progress', label: 'Progrès', icon: '📈' },
+  { to: '/leaderboard', label: 'Classement', icon: '🏆' },
   { to: '/settings', label: 'Réglages', icon: '⚙️' }
 ]
 
@@ -25,7 +26,7 @@ export default function Layout() {
               to={t.to}
               end={t.to === '/'}
               className={({ isActive }) =>
-                `flex flex-1 flex-col items-center gap-0.5 py-2.5 text-[11px] transition-colors ${
+                `flex flex-1 flex-col items-center gap-0.5 py-2.5 text-[10px] transition-colors ${
                   isActive ? 'text-emerald-400' : 'text-zinc-500'
                 }`
               }

@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { RankBadge } from '../components/RankBadge'
 import { STAT_META } from '../data/movements'
 import {
   SUB_XP_BASE,
@@ -9,6 +10,7 @@ import {
   totalReps,
   visitedSpots
 } from '../game/engine'
+import { rankProgress } from '../game/ranks'
 import { useStore } from '../store/useStore'
 import type { Quest, StatKey, Workout } from '../types'
 
@@ -97,6 +99,7 @@ export default function Home() {
   }
 
   const info = levelInfo(player.xpTotal)
+  const rank = rankProgress(player.xpTotal)
   const bonus = activeBonusPercent(workouts)
   const daily = quests.filter((q) => q.type === 'daily')
   const weekly = quests.filter((q) => q.type === 'weekly')
@@ -110,6 +113,12 @@ export default function Home() {
         <div>
           <div className="text-[11px] uppercase tracking-widest text-zinc-500">Héros</div>
           <h1 className="text-2xl font-black">{player.pseudo}</h1>
+          <div className="mt-1 flex items-center gap-1.5">
+            <RankBadge from={rank.rank.from} to={rank.rank.to} label={rank.rank.label} size={22} />
+            <span className="text-xs font-bold" style={{ color: rank.rank.to }}>
+              {rank.rank.name}
+            </span>
+          </div>
         </div>
         <div className="rounded-2xl border border-orange-500/30 bg-orange-500/10 px-3 py-2 text-center">
           <div className="text-lg leading-none">🔥</div>

@@ -10,6 +10,7 @@ FitQuest transforme le sport en un jeu d'aventure captivant. Relevé des défis 
 
 - **Héros** : pseudo, niveau global (courbe `100 × niveau^1.5`), barre XP, streak 🔥, 4 stats RPG (Push / Pull / Jambes / Endurance), quêtes du jour + de la semaine, boss du mois.
 - **Séance** : templates Push / Pull / Jambes / Full body / Libre, saisie rapide (boutons -5 / -1 / +1 / +5), timer de repos (+30s / passer), liste des séries, écran loot (XP, level up, quêtes accomplies, badges, bonus explorateur).
+- **Classement** : rang calqué sur le mode Classé de Fortnite (Bronze → Argent → Or → Platine → Diamant → Élite → Champion → Irréel, avec les divisions I/II/III), progression d'XP vers le rang suivant, échelle complète des 22 paliers et ligue locale de rivaux.
 - **Progression** : volume hebdomadaire sur 12 semaines, niveau + record + courbe par mouvement, grille de 13 badges.
 - **Spots** : carte interactive (Leaflet / OpenStreetMap), ajout d'une salle ou d'un parc en touchant la carte (équipements + note ★ optionnelle), filtres (type, note minimum, « près de moi » 5 km), fiche avec avis, bouton « S'entraîner ici » (+50 XP explorateur la première fois).
 - **Réglages** : pseudo, repos par défaut (60/90/120/180 s), export / import JSON, réinitialisation.
