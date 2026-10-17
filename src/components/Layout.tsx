@@ -4,6 +4,7 @@ const TABS: { to: string; label: string; short?: string; icon: string }[] = [
   { to: '/', label: 'Héros', icon: '🦸' },
   { to: '/workout', label: 'Séance', icon: '💪' },
   { to: '/routines', label: 'Routines', icon: '📋' },
+  { to: '/wods', label: 'WODs', icon: '📚' },
   { to: '/map', label: 'Spots', icon: '🗺️' },
   { to: '/bodygraph', label: 'Body graph', short: 'Muscles', icon: '🧍' },
   { to: '/progress', label: 'Progrès', icon: '📈' },

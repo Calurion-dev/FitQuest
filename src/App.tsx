@@ -8,6 +8,7 @@ import MapPage from './pages/MapPage'
 import Progress from './pages/Progress'
 import Routines from './pages/Routines'
 import Settings from './pages/Settings'
+import Wods from './pages/Wods'
 import WorkoutPage from './pages/Workout'
 import { useCloud } from './store/useCloud'
 import { useStore } from './store/useStore'
@@ -30,6 +31,7 @@ export default function App() {
         <Route index element={<Home />} />
         <Route path="workout" element={<WorkoutPage />} />
         <Route path="routines" element={<Routines />} />
+        <Route path="wods" element={<Wods />} />
         <Route path="map" element={<MapPage />} />
         <Route path="bodygraph" element={<BodyGraph />} />
         <Route path="progress" element={<Progress />} />
