@@ -41,6 +41,7 @@ export default function WorkoutPage() {
   const [sets, setSets] = useState<WorkoutSet[]>([])
   const [current, setCurrent] = useState<string>(TEMPLATES[3].movements[0])
   const [amount, setAmount] = useState(10)
+  const [weight, setWeight] = useState('')
   const [startedAt, setStartedAt] = useState(0)
   const [restEndsAt, setRestEndsAt] = useState<number | null>(null)
   const [now, setNow] = useState(Date.now())
@@ -99,6 +100,8 @@ export default function WorkoutPage() {
     setCurrent(id)
     const m = movementById(id)
     setAmount(targets[id]?.reps ?? (m?.isHold ? 30 : 10))
+    // Le lest est propre au mouvement courant (gilet de traction ≠ squat au poids du corps).
+    setWeight('')
   }
 
   const start = () => {
@@ -115,9 +118,10 @@ export default function WorkoutPage() {
   const validateSet = () => {
     const m = movementById(current)
     if (!m) return
+    const addedKg = Number(weight.replace(',', '.')) || 0
     const s: WorkoutSet = m.isHold
-      ? { id: uid(), movementId: current, seconds: amount }
-      : { id: uid(), movementId: current, reps: amount }
+      ? { id: uid(), movementId: current, seconds: amount, addedKg: addedKg > 0 ? addedKg : undefined }
+      : { id: uid(), movementId: current, reps: amount, addedKg: addedKg > 0 ? addedKg : undefined }
     setSets((prev) => [...prev, s])
     setRestEndsAt(Date.now() + settings.restSec * 1000)
   }
@@ -485,6 +489,23 @@ export default function WorkoutPage() {
                   </button>
                 ))}
               </div>
+              <div className="mx-auto mt-2 flex max-w-md items-center justify-center gap-2">
+                <label htmlFor="lest" className="eyebrow">
+                  🎒 Lest
+                </label>
+                <input
+                  id="lest"
+                  type="number"
+                  inputMode="decimal"
+                  min={0}
+                  step={0.5}
+                  placeholder="0"
+                  value={weight}
+                  onChange={(e) => setWeight(e.target.value)}
+                  className="hud w-20 rounded-xl border-2 border-edge bg-panel-2 py-2 text-center text-base font-bold placeholder:text-zinc-600"
+                />
+                <span className="eyebrow">kg</span>
+              </div>
               <button onClick={validateSet} className="btn btn-volt mx-auto mt-4 w-full max-w-md py-4 text-base">
                 ✓ Valider la série
               </button>
@@ -505,6 +526,7 @@ export default function WorkoutPage() {
                       <span className="hud font-bold">
                         {s.reps ?? s.seconds}
                         {m?.isHold ? 's' : ''}
+                        {s.addedKg ? ` · +${s.addedKg}kg` : ''}
                       </span>
                       <span className="hud text-xs font-bold text-volt">+{setXp(s)}</span>
                       <button

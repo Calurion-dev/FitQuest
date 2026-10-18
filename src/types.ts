@@ -16,6 +16,8 @@ export interface WorkoutSet {
   movementId: string
   reps?: number
   seconds?: number
+  /** Lest ajouté en kg, si la série a été faite avec du poids. */
+  addedKg?: number
 }
 
 export interface Workout {
