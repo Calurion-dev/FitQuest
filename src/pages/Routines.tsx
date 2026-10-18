@@ -184,9 +184,9 @@ export default function Routines() {
             return (
               <div
                 key={day.id}
-                className={`rounded-2xl border-2 p-2.5 ${today ? 'border-volt/60' : 'border-edge'} ${
-                  plan.rest ? 'bg-panel/40' : 'bg-panel'
-                }`}
+                className={`rounded-2xl border-2 p-2.5 ${
+                  today ? 'border-volt/60' : plan.rest ? 'border-ice/30' : 'border-edge'
+                } ${plan.rest ? 'bg-ice/5' : 'bg-panel'}`}
               >
                 <div className="flex items-center justify-between gap-1">
                   <span className={`font-display text-[11px] uppercase ${today ? 'text-volt' : 'text-mute'}`}>
@@ -198,13 +198,18 @@ export default function Routines() {
                     }
                     aria-pressed={plan.rest}
                     className={`rounded-full border-2 px-1.5 py-0.5 text-[10px] font-bold ${
-                      plan.rest ? 'border-ember/60 text-ember' : 'border-edge text-mute hover:border-zinc-600'
+                      plan.rest ? 'border-ice/50 text-ice' : 'border-edge text-mute hover:border-zinc-600'
                     }`}
                   >
                     {plan.rest ? '😴 Repos' : '🏋️ Actif'}
                   </button>
                 </div>
-                {!plan.rest && (
+                {plan.rest ? (
+                  <div className="mt-3 pb-1 text-center">
+                    <div className="text-3xl">😴</div>
+                    <div className="font-display mt-1 text-base uppercase tracking-wide text-ice/80">Repos</div>
+                  </div>
+                ) : (
                   <div className="mt-2 space-y-1.5">
                     {plan.routineIds.map((rid) => (
                       <span key={rid} className="flex items-center gap-1">
