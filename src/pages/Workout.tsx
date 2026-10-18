@@ -1,11 +1,24 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { FAMILY_LABELS, MOVEMENTS, SPOT_TYPE_META, STAT_META, movementById } from '../data/movements'
-import { setXp } from '../game/engine'
-import { dayKey, formatDuration } from '../lib/date'
+import {
+  FAMILY_LABELS,
+  MOVEMENTS,
+  SPOT_TYPE_META,
+  STAT_META,
+  movementById
+} from '../data/movements'
+import { StretchGuide } from '../components/StretchGuide'
+import { warmupFor } from '../data/warmup'
+import { WODS } from '../data/wods'
+import { lastSessionFor, movementTotals, setXp } from '../game/engine'
+import { burstConfetti } from '../lib/confetti'
+import { dateFromKey, dayKey, formatDuration } from '../lib/date'
 import { uid } from '../lib/id'
+import { playLevelUp, playRecord, playRestEnd, playTick } from '../lib/sfx'
+import { fromDisplayKg, toDisplayKg, weightLabel } from '../lib/units'
+import { useCountUp } from '../lib/useCountUp'
 import { useStore } from '../store/useStore'
-import type { LootSummary, RoutineItem, Workout, WorkoutSet } from '../types'
+import type { Family, LootSummary, RoutineItem, SetType, Workout, WorkoutSet } from '../types'
 
 const TEMPLATES: { id: string; label: string; icon: string; movements: string[] }[] = [
   { id: 'push', label: 'Push', icon: '💪', movements: ['pompes', 'pompes_larges', 'pompes_diamant', 'dips'] },
@@ -15,6 +28,16 @@ const TEMPLATES: { id: string; label: string; icon: string; movements: string[] 
   { id: 'libre', label: 'Libre', icon: '🎯', movements: MOVEMENTS.map((m) => m.id) }
 ]
 
+const SET_TYPES: { id: SetType | undefined; label: string; glyph: string }[] = [
+  { id: undefined, label: 'Normale', glyph: '•' },
+  { id: 'warmup', label: 'Échauff.', glyph: '~' },
+  { id: 'drop', label: 'Drop', glyph: '⤵' },
+  { id: 'amrap', label: 'AMRAP', glyph: '⏱' },
+  { id: 'failure', label: 'Échec', glyph: '✖' }
+]
+
+const TYPE_GLYPH: Record<string, string> = { warmup: '~', drop: '⤵', amrap: '⏱', failure: '✖' }
+
 type Phase = 'setup' | 'active' | 'done'
 
 function secondsToClock(total: number): string {
@@ -23,37 +46,83 @@ function secondsToClock(total: number): string {
   return `${m}:${String(s).padStart(2, '0')}`
 }
 
+interface NavState {
+  spotId?: string
+  routineId?: string
+  wodId?: string
+  movements?: string[]
+  deload?: boolean
+}
+
 export default function WorkoutPage() {
   const navigate = useNavigate()
   const location = useLocation()
-  const initialSpotId = (location.state as { spotId?: string; routineId?: string } | null)?.spotId
-  const initialRoutineId = (location.state as { spotId?: string; routineId?: string } | null)?.routineId
+  const nav = (location.state as NavState | null) ?? {}
   const spots = useStore((s) => s.spots)
   const workouts = useStore((s) => s.workouts)
   const settings = useStore((s) => s.settings)
+  const routine = useStore((s) => s.routines).find((r) => r.id === nav.routineId)
+  const draft = useStore((s) => s.draft)
+  const startDraft = useStore((s) => s.startDraft)
+  const patchDraft = useStore((s) => s.patchDraft)
+  const clearDraft = useStore((s) => s.clearDraft)
+  const removeDraftSet = useStore((s) => s.removeDraftSet)
   const finishWorkout = useStore((s) => s.finishWorkout)
-  const routine = useStore((s) => s.routines).find((r) => r.id === initialRoutineId)
 
-  const [phase, setPhase] = useState<Phase>('setup')
-  const [templateId, setTemplateId] = useState('full')
-  const [selected, setSelected] = useState<string[]>(TEMPLATES[3].movements)
-  const [spotId, setSpotId] = useState<string | undefined>(initialSpotId)
-  const [sets, setSets] = useState<WorkoutSet[]>([])
-  const [current, setCurrent] = useState<string>(TEMPLATES[3].movements[0])
+  const [phase, setPhase] = useState<Phase>(() => (useStore.getState().draft ? 'active' : 'setup'))
+  const [templateId, setTemplateId] = useState(nav.movements?.length ? 'libre' : 'full')
+  const [selected, setSelected] = useState<string[]>(nav.movements?.length ? nav.movements : TEMPLATES[3].movements)
+  const [spotId, setSpotId] = useState<string | undefined>(nav.spotId)
+  const [deload, setDeload] = useState(Boolean(nav.deload))
+  const [current, setCurrent] = useState<string>(() => useStore.getState().draft?.selected[0] ?? TEMPLATES[3].movements[0])
+  const [lootFamilies, setLootFamilies] = useState<Family[]>([])
+  const [stretchOpen, setStretchOpen] = useState(false)
   const [amount, setAmount] = useState(10)
   const [weight, setWeight] = useState('')
-  const [startedAt, setStartedAt] = useState(0)
-  const [restEndsAt, setRestEndsAt] = useState<number | null>(null)
+  const [setType, setSetType] = useState<SetType | undefined>(undefined)
   const [now, setNow] = useState(Date.now())
   const [loot, setLoot] = useState<LootSummary | null>(null)
   const [shared, setShared] = useState(false)
   const [targets, setTargets] = useState<Record<string, RoutineItem>>({})
+  const [warmupOpen, setWarmupOpen] = useState(false)
+  const [pocket, setPocket] = useState(false)
+  const [bigTimer, setBigTimer] = useState(false)
+  const pocketTap = useRef(0)
 
   useEffect(() => {
     if (phase !== 'active') return
     const t = setInterval(() => setNow(Date.now()), 500)
     return () => clearInterval(t)
   }, [phase])
+
+  // Séance en cours : écran allumé (#17), re-demandé au retour d'onglet.
+  useEffect(() => {
+    if (phase !== 'active' || !settings.wakeLock) return
+    const lockNav = navigator as Navigator & {
+      wakeLock?: { request(type: 'screen'): Promise<{ release(): Promise<void> }> }
+    }
+    let sentinel: { release(): Promise<void> } | null = null
+    let stopped = false
+    const acquire = () => {
+      void lockNav.wakeLock
+        ?.request('screen')
+        .then((s) => {
+          if (stopped) void s.release()
+          else sentinel = s
+        })
+        .catch(() => {})
+    }
+    const onVisible = () => {
+      if (document.visibilityState === 'visible' && !sentinel) acquire()
+    }
+    acquire()
+    document.addEventListener('visibilitychange', onVisible)
+    return () => {
+      stopped = true
+      document.removeEventListener('visibilitychange', onVisible)
+      void sentinel?.release().catch(() => {})
+    }
+  }, [phase, settings.wakeLock])
 
   // Routine choisie depuis la page Routines : on pré-remplit la séance et ses objectifs.
   useEffect(() => {
@@ -68,11 +137,52 @@ export default function WorkoutPage() {
     }
   }, [routine?.id])
 
-  const liveXp = useMemo(() => sets.reduce((a, s) => a + setXp(s), 0), [sets])
+  const draftSets = draft?.sets ?? []
+  const liveXp = useMemo(() => draftSets.reduce((a, s) => a + setXp(s), 0), [draftSets])
   const currentMovement = movementById(current)
-  const spot = spots.find((s) => s.id === spotId)
-  const elapsed = phase === 'active' ? Math.floor((now - startedAt) / 1000) : 0
+  const activeSpotId = draft?.spotId ?? spotId
+  const spot = spots.find((s) => s.id === activeSpotId)
+  const elapsed = draft ? Math.floor((now - draft.startedAt) / 1000) : 0
+  const restEndsAt = draft?.restEndsAt ?? null
   const restLeft = restEndsAt ? Math.max(0, Math.ceil((restEndsAt - now) / 1000)) : null
+
+  // Fin de repos : triple bip + vibration.
+  const prevRest = useRef<number | null>(null)
+  useEffect(() => {
+    if (prevRest.current !== null && prevRest.current > 0 && restLeft === 0) {
+      playRestEnd(settings.sound)
+      navigator.vibrate?.([80, 40, 80])
+    }
+    prevRest.current = restLeft
+  }, [restLeft, settings.sound])
+
+  // Mode poche : se libère tout seul à la fin du repos.
+  useEffect(() => {
+    if (pocket && restLeft === 0) setPocket(false)
+  }, [pocket, restLeft])
+
+  // Loot : jingle + confettis.
+  useEffect(() => {
+    if (phase !== 'done' || !loot) return
+    if (loot.levelAfter > loot.levelBefore) playLevelUp(settings.sound)
+    else if (loot.records.length) playRecord(settings.sound)
+    if (loot.records.length || loot.badgesUnlocked.length || loot.levelAfter > loot.levelBefore) burstConfetti()
+  }, [phase, loot, settings.sound])
+
+  const shownXp = useCountUp(loot?.xpTotal ?? 0)
+
+  // Dernière perf + record du mouvement courant (#3).
+  const lastPerf = useMemo(() => {
+    if (!currentMovement || phase !== 'active') return null
+    const last = lastSessionFor(workouts, currentMovement.id)
+    const best = movementTotals(workouts, currentMovement.id).best
+    if (!last) return best > 0 ? { last: null, best } : null
+    const days = Math.max(
+      0,
+      Math.round((dateFromKey(dayKey()).getTime() - dateFromKey(last.dayKey).getTime()) / 86400000)
+    )
+    return { last: { values: last.values, days }, best }
+  }, [currentMovement, workouts, phase])
 
   const chooseTemplate = (id: string) => {
     const t = TEMPLATES.find((x) => x.id === id)
@@ -102,56 +212,89 @@ export default function WorkoutPage() {
     setAmount(targets[id]?.reps ?? (m?.isHold ? 30 : 10))
     // Le lest est propre au mouvement courant, pré-rempli si la routine en définit un.
     const targetKg = targets[id]?.addedKg
-    setWeight(targetKg ? String(targetKg) : '')
+    setWeight(targetKg ? String(toDisplayKg(targetKg, settings.units)) : '')
   }
 
-  const start = () => {
+  const reallyStart = () => {
     if (!selected.length) return
-    setSets([])
     setLoot(null)
-    setStartedAt(Date.now())
     setNow(Date.now())
-    setRestEndsAt(null)
+    setWarmupOpen(false)
+    startDraft({
+      startedAt: Date.now(),
+      sets: [],
+      selected,
+      templateId,
+      spotId,
+      wodId: nav.wodId,
+      targets,
+      restEndsAt: null,
+      deload
+    })
     pickMovement(selected[0])
     setPhase('active')
   }
 
+  const start = () => {
+    if (settings.warmup) setWarmupOpen(true)
+    else reallyStart()
+  }
+
   const validateSet = () => {
     const m = movementById(current)
-    if (!m) return
-    const addedKg = Number(weight.replace(',', '.')) || 0
+    if (!m || !draft) return
+    const displayKg = Number(weight.replace(',', '.')) || 0
+    const addedKg = displayKg > 0 ? fromDisplayKg(displayKg, settings.units) : 0
     const s: WorkoutSet = m.isHold
-      ? { id: uid(), movementId: current, seconds: amount, addedKg: addedKg > 0 ? addedKg : undefined }
-      : { id: uid(), movementId: current, reps: amount, addedKg: addedKg > 0 ? addedKg : undefined }
-    setSets((prev) => [...prev, s])
-    setRestEndsAt(Date.now() + settings.restSec * 1000)
+      ? { id: uid(), movementId: current, seconds: amount, addedKg: addedKg > 0 ? addedKg : undefined, type: setType }
+      : { id: uid(), movementId: current, reps: amount, addedKg: addedKg > 0 ? addedKg : undefined, type: setType }
+    patchDraft({ sets: [...draft.sets, s], restEndsAt: Date.now() + settings.restSec * 1000 })
+    setSetType(undefined)
+    playTick(settings.sound)
+    navigator.vibrate?.(20)
+  }
+
+  const again = (s: WorkoutSet) => {
+    if (!draft) return
+    patchDraft({
+      sets: [...draft.sets, { ...s, id: uid() }],
+      restEndsAt: Date.now() + settings.restSec * 1000
+    })
+    playTick(settings.sound)
+    navigator.vibrate?.(20)
   }
 
   const finish = () => {
-    if (!sets.length) return
-    const durationSec = Math.max(1, Math.round((Date.now() - startedAt) / 1000))
+    if (!draft || !draft.sets.length) return
+    const durationSec = Math.max(1, Math.round((Date.now() - draft.startedAt) / 1000))
     const workout: Workout = {
       id: uid(),
       date: new Date().toISOString(),
       dayKey: dayKey(),
-      spotId,
+      spotId: draft.spotId,
       durationSec,
-      sets,
-      xp: liveXp
+      sets: draft.sets,
+      xp: liveXp,
+      wodId: draft.wodId,
+      deload: draft.deload
     }
+    setLootFamilies(
+      Array.from(
+        new Set(draft.sets.map((s) => movementById(s.movementId)?.family).filter((f): f is Family => Boolean(f)))
+      )
+    )
     const summary = finishWorkout(workout)
-    setRestEndsAt(null)
+    clearDraft()
     setLoot(summary)
     setPhase('done')
   }
 
   const restart = () => {
+    clearDraft()
     setPhase('setup')
-    setSets([])
     setLoot(null)
     setShared(false)
-    setStartedAt(0)
-    setRestEndsAt(null)
+    setSetType(undefined)
   }
 
   // ---------- Écran LOOT ----------
@@ -188,7 +331,7 @@ export default function WorkoutPage() {
         <div className="card card-volt relative overflow-hidden p-5 text-center">
           <div className="tape absolute inset-x-0 top-0" />
           <div className="eyebrow mt-2">XP gagné</div>
-          <div className="hud mt-1 text-5xl font-bold leading-none">+{loot.xpTotal}</div>
+          <div className="hud mt-1 text-5xl font-bold leading-none">+{shownXp}</div>
           <div className="mt-4 space-y-1.5 border-t-2 border-dashed border-edge pt-3 text-left text-xs">
             <div className="flex justify-between">
               <span className="text-mute">Séries ({loot.setCount})</span>
@@ -206,12 +349,34 @@ export default function WorkoutPage() {
                 <span className="hud font-bold">+{loot.xpSpotBonus} XP</span>
               </div>
             )}
+            {loot.xpWodBonus > 0 && (
+              <div className="flex justify-between">
+                <span className="text-mute">📚 WOD du jour</span>
+                <span className="hud font-bold">+{loot.xpWodBonus} XP</span>
+              </div>
+            )}
+            {loot.xpChallenge > 0 && (
+              <div className="flex justify-between">
+                <span className="text-mute">🗓️ Défi 21 jours (palier)</span>
+                <span className="hud font-bold">+{loot.xpChallenge} XP</span>
+              </div>
+            )}
+            {loot.xpWager > 0 && (
+              <div className="flex justify-between">
+                <span className="text-mute">🎯 Pari de série gagné</span>
+                <span className="hud font-bold">+{loot.xpWager} XP</span>
+              </div>
+            )}
             {loot.bonusPercent > 0 && (
               <div className="flex justify-between">
                 <span className="text-mute">Bonus régularité inclus</span>
                 <span className="hud font-bold">+{loot.bonusPercent}%</span>
               </div>
             )}
+            <div className="pt-1 text-[11px] leading-relaxed text-zinc-600">
+              Chaque répétition rapporte l'XP du mouvement ; le bonus régularité (+{loot.bonusPercent} %)
+              s'applique si tu t'entraînes 3 fois sur 7 jours.
+            </div>
           </div>
         </div>
 
@@ -296,21 +461,38 @@ export default function WorkoutPage() {
           </button>
         </div>
 
+        {settings.postStretch && (
+          <button onClick={() => setStretchOpen(true)} className="btn w-full py-3.5 text-xs">
+            🧘 Étirements guidés (~5 min)
+          </button>
+        )}
+
         <button onClick={share} className="btn w-full py-3.5 text-xs">
           {shared ? '✅ Résumé copié !' : '📣 Partager ma séance'}
         </button>
+
+        {stretchOpen && <StretchGuide families={lootFamilies} onClose={() => setStretchOpen(false)} />}
       </div>
     )
   }
 
   // ---------- Écran SETUP ----------
   if (phase === 'setup') {
+    const wod = nav.wodId ? WODS.find((w) => w.id === nav.wodId) : undefined
     return (
       <div className="space-y-5">
         <header>
           <div className="eyebrow">Composer</div>
           <h1 className="mt-0.5 text-3xl uppercase md:text-4xl">Nouvelle séance</h1>
         </header>
+
+        {wod && (
+          <div className="card flex items-center gap-2 border-volt/60 px-4 py-3 text-sm">
+            <span>📚</span>
+            <span className="text-mute">WOD du jour :</span>
+            <span className="font-semibold text-volt">{wod.name}</span>
+          </div>
+        )}
 
         {spot && (
           <div className="card flex items-center gap-2 px-4 py-3 text-sm">
@@ -417,6 +599,14 @@ export default function WorkoutPage() {
               </section>
             ) : null}
 
+            <button
+              onClick={() => setDeload((d) => !d)}
+              aria-pressed={deload}
+              className={`chip w-full justify-center py-2.5 text-[11px] ${deload ? 'chip-on' : ''}`}
+            >
+              🪶 Séance allégée (pas de records)
+            </button>
+
             <button disabled={!selected.length} onClick={start} className="btn btn-volt w-full py-4 text-base">
               ▶️ Démarrer la séance
             </button>
@@ -426,16 +616,52 @@ export default function WorkoutPage() {
             </p>
           </div>
         </div>
+
+        {/* Échauffement (#6) : overlay, rien n'est loggé. */}
+        {warmupOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/90 p-4">
+            <div className="card w-full max-w-md p-5">
+              <div className="eyebrow text-volt">Échauffement</div>
+              <h2 className="mt-0.5 font-display text-xl uppercase">5 minutes, tranquille</h2>
+              <ul className="mt-3 space-y-2 text-sm">
+                {warmupFor(
+                  Array.from(new Set(selected.map((id) => movementById(id)?.family).filter((f): f is NonNullable<typeof f> => Boolean(f))))
+                ).map((item) => (
+                  <li key={item.text} className="flex items-start gap-2">
+                    <span>{item.icon}</span>
+                    <span className="text-zinc-300">{item.text}</span>
+                  </li>
+                ))}
+              </ul>
+              <div className="mt-4 grid grid-cols-2 gap-2">
+                <button onClick={reallyStart} className="btn py-3 text-xs">
+                  Passer
+                </button>
+                <button onClick={reallyStart} className="btn btn-volt py-3 text-xs">
+                  🔥 C'est fait, on démarre
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     )
   }
 
   // ---------- Écran ACTIVE ----------
+  const wod = draft?.wodId ? WODS.find((w) => w.id === draft.wodId) : undefined
   return (
     <div className="space-y-4 md:space-y-5">
       <div className="card flex items-center justify-between gap-3 px-4 py-3">
         <span className="hud text-2xl font-bold leading-none">⏱ {secondsToClock(elapsed)}</span>
-        <span className="hud text-sm font-bold text-volt">+{liveXp} XP</span>
+        <button
+          onClick={() => setBigTimer(true)}
+          className="hud text-sm font-bold text-volt"
+          aria-label="Afficher le chrono en grand"
+        >
+          +{liveXp} XP ⛶
+        </button>
+        {wod && <span className="hud hidden text-xs font-bold text-volt sm:block">📚 {wod.name}</span>}
         {spot && (
           <span className="hidden items-center gap-1.5 text-xs text-mute sm:flex">
             {SPOT_TYPE_META[spot.type].icon} {spot.name}
@@ -446,11 +672,12 @@ export default function WorkoutPage() {
       <div className="grid gap-4 lg:grid-cols-3 lg:gap-5">
         <div className="space-y-4 lg:col-span-2">
           <div className="no-scrollbar -mx-4 flex gap-2 overflow-x-auto px-4 pb-1 lg:mx-0 lg:flex-wrap lg:px-0">
-            {selected.map((id) => {
+            {(draft?.selected ?? selected).map((id) => {
               const m = movementById(id)
               if (!m) return null
-              const count = sets.filter((s) => s.movementId === id).length
+              const count = draftSets.filter((s) => s.movementId === id).length
               const on = current === id
+              const target = (draft?.targets ?? targets)[id]
               return (
                 <button
                   key={id}
@@ -458,9 +685,9 @@ export default function WorkoutPage() {
                   className={`chip shrink-0 text-xs ${on ? 'chip-on' : ''}`}
                 >
                   {m.emoji} {m.name}
-                  {(count > 0 || targets[id]) && (
+                  {(count > 0 || target) && (
                     <span className={`hud rounded-full px-1.5 text-[10px] ${on ? 'bg-volt text-ink' : 'bg-panel-2'}`}>
-                      {targets[id] ? `${count}/${targets[id].sets}` : count}
+                      {target ? `${count}/${target.sets}` : count}
                     </span>
                   )}
                 </button>
@@ -472,11 +699,25 @@ export default function WorkoutPage() {
             <div className="card p-5 text-center md:p-6">
               <div className="text-3xl">{currentMovement.emoji}</div>
               <div className="eyebrow mt-2">{currentMovement.name}</div>
-              {targets[currentMovement.id] && (
+              {(draft?.targets ?? targets)[currentMovement.id] && (
                 <div className="hud mt-1 text-[11px] text-volt">
-                  Objectif {targets[currentMovement.id].sets} × {targets[currentMovement.id].reps}
+                  Objectif {(draft?.targets ?? targets)[currentMovement.id]!.sets} ×{' '}
+                  {(draft?.targets ?? targets)[currentMovement.id]!.reps}
                   {currentMovement.isHold ? ' s' : ''}
-                  {targets[currentMovement.id].addedKg ? ` · +${targets[currentMovement.id].addedKg}kg` : ''}
+                  {(draft?.targets ?? targets)[currentMovement.id]!.addedKg
+                    ? ` · +${(draft?.targets ?? targets)[currentMovement.id]!.addedKg}kg`
+                    : ''}
+                </div>
+              )}
+              {lastPerf && (
+                <div className="hud mt-1 text-[11px] text-mute">
+                  {lastPerf.last
+                    ? `Dernière fois : ${lastPerf.last.values.join(' · ')}${currentMovement.isHold ? ' s' : ''} (il y a ${lastPerf.last.days} j)`
+                    : null}
+                  {lastPerf.last && lastPerf.best > 0 ? ' — ' : null}
+                  {lastPerf.best > 0
+                    ? `Record : ${lastPerf.best}${currentMovement.isHold ? ' s' : ''}`
+                    : null}
                 </div>
               )}
               <div className="hud my-3 text-6xl font-bold leading-none md:text-7xl">{amount}</div>
@@ -501,39 +742,64 @@ export default function WorkoutPage() {
                   type="number"
                   inputMode="decimal"
                   min={0}
-                  step={0.5}
+                  step={settings.units === 'lbs' ? 1 : 0.5}
                   placeholder="0"
                   value={weight}
                   onChange={(e) => setWeight(e.target.value)}
                   className="hud w-20 rounded-xl border-2 border-edge bg-panel-2 py-2 text-center text-base font-bold placeholder:text-zinc-600"
                 />
-                <span className="eyebrow">kg</span>
+                <span className="eyebrow">{weightLabel(settings.units)}</span>
               </div>
+              <div className="mx-auto mt-3 flex max-w-md flex-wrap justify-center gap-1.5">
+                {SET_TYPES.map((t) => (
+                  <button
+                    key={t.label}
+                    onClick={() => setSetType(t.id)}
+                    aria-pressed={setType === t.id}
+                    className={`chip text-[10px] ${setType === t.id ? 'chip-on' : ''}`}
+                  >
+                    {t.glyph} {t.label}
+                  </button>
+                ))}
+              </div>
+              {setType === 'warmup' && (
+                <p className="mt-2 text-[11px] text-mute">Une série d'échauffement ne rapporte ni XP ni record.</p>
+              )}
               <button onClick={validateSet} className="btn btn-volt mx-auto mt-4 w-full max-w-md py-4 text-base">
                 ✓ Valider la série
               </button>
             </div>
           )}
 
-          {sets.length > 0 && (
+          {draftSets.length > 0 && (
             <section>
-              <h2 className="eyebrow mb-2.5">Séries ({sets.length})</h2>
+              <h2 className="eyebrow mb-2.5">Séries ({draftSets.length})</h2>
               <div className="space-y-2">
-                {sets.map((s, i) => {
+                {draftSets.map((s, i) => {
                   const m = movementById(s.movementId)
                   return (
                     <div key={s.id} className="card flex items-center gap-3 px-3.5 py-2.5 text-sm">
                       <span className="hud text-[11px] text-zinc-500">#{String(i + 1).padStart(2, '0')}</span>
                       <span>{m?.emoji}</span>
-                      <span className="min-w-0 flex-1 truncate font-medium">{m?.name}</span>
+                      <span className="min-w-0 flex-1 truncate font-medium">
+                        {s.type ? <span className="hud mr-1 text-mute">{TYPE_GLYPH[s.type]}</span> : null}
+                        {m?.name}
+                      </span>
                       <span className="hud font-bold">
                         {s.reps ?? s.seconds}
                         {m?.isHold ? 's' : ''}
-                        {s.addedKg ? ` · +${s.addedKg}kg` : ''}
+                        {s.addedKg ? ` · +${toDisplayKg(s.addedKg, settings.units)}${weightLabel(settings.units)}` : ''}
                       </span>
                       <span className="hud text-xs font-bold text-volt">+{setXp(s)}</span>
                       <button
-                        onClick={() => setSets((prev) => prev.filter((x) => x.id !== s.id))}
+                        onClick={() => again(s)}
+                        className="px-1 text-zinc-500 hover:text-volt"
+                        aria-label="Refaire la même série"
+                      >
+                        ↻
+                      </button>
+                      <button
+                        onClick={() => removeDraftSet(s.id)}
                         className="px-1 text-zinc-600 hover:text-ember"
                         aria-label="Supprimer la série"
                       >
@@ -556,31 +822,40 @@ export default function WorkoutPage() {
                     Repos
                   </div>
                   <div className="hud mt-1 text-5xl font-bold leading-none text-ice">{restLeft}s</div>
-                  <div className="mt-4 flex justify-center gap-2">
+                  <div className="mt-4 flex flex-wrap justify-center gap-2">
                     <button
-                      onClick={() => setRestEndsAt((e) => (e ? e + 30000 : e))}
+                      onClick={() => patchDraft({ restEndsAt: (restEndsAt ?? Date.now()) + 30000 })}
                       className="btn px-3.5 py-2.5 text-[11px]"
                     >
                       +30s
                     </button>
                     <button
-                      onClick={() => setRestEndsAt(null)}
+                      onClick={() => patchDraft({ restEndsAt: null })}
                       className="btn px-3.5 py-2.5 text-[11px]"
                       style={{ background: 'var(--color-ice)', color: 'var(--color-ink)', borderColor: 'var(--color-ink)' }}
                     >
                       Passer
                     </button>
+                    <button onClick={() => setBigTimer(true)} className="btn px-3.5 py-2.5 text-[11px]">
+                      ⛶ Géant
+                    </button>
+                    <button onClick={() => setPocket(true)} className="btn px-3.5 py-2.5 text-[11px]">
+                      🔒 Poche
+                    </button>
                   </div>
                 </>
               ) : (
-                <button onClick={() => setRestEndsAt(null)} className="w-full font-display text-base uppercase text-volt">
+                <button
+                  onClick={() => patchDraft({ restEndsAt: null })}
+                  className="w-full font-display text-base uppercase text-volt"
+                >
                   💥 C'est reparti !
                 </button>
               )}
             </div>
           )}
 
-          <button disabled={!sets.length} onClick={finish} className="btn w-full py-4 text-base">
+          <button disabled={!draftSets.length} onClick={finish} className="btn w-full py-4 text-base">
             🏁 Terminer la séance
           </button>
           <button onClick={restart} className="w-full py-1 text-center text-[11px] text-zinc-600 underline">
@@ -588,6 +863,64 @@ export default function WorkoutPage() {
           </button>
         </div>
       </div>
+
+      {/* Chrono géant (#21) */}
+      {bigTimer && (
+        <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-ink/95 p-6">
+          <div className="eyebrow text-ice">{restLeft && restLeft > 0 ? 'Repos' : 'Séance'}</div>
+          <div className="hud my-4 text-8xl font-bold leading-none md:text-9xl">
+            {secondsToClock(restLeft && restLeft > 0 ? restLeft : elapsed)}
+          </div>
+          <div className="flex flex-wrap justify-center gap-2">
+            {restLeft !== null && restLeft > 0 && (
+              <>
+                <button
+                  onClick={() => patchDraft({ restEndsAt: (restEndsAt ?? Date.now()) + 30000 })}
+                  className="btn px-5 py-3 text-sm"
+                >
+                  +30s
+                </button>
+                <button
+                  onClick={() => patchDraft({ restEndsAt: null })}
+                  className="btn px-5 py-3 text-sm"
+                  style={{ background: 'var(--color-ice)', color: 'var(--color-ink)', borderColor: 'var(--color-ink)' }}
+                >
+                  Passer
+                </button>
+              </>
+            )}
+            <button onClick={() => setBigTimer(false)} className="btn btn-volt px-5 py-3 text-sm">
+              Fermer
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Mode poche (#23) : double-tap pour libérer. */}
+      {pocket && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-ink p-6 text-center"
+          onClick={() => {
+            const t = Date.now()
+            if (t - pocketTap.current < 700) {
+              setPocket(false)
+              pocketTap.current = 0
+            } else {
+              pocketTap.current = t
+            }
+          }}
+        >
+          <div>
+            <div className="text-4xl">🔒</div>
+            <div className="mt-3 font-display text-lg uppercase">Écran verrouillé</div>
+            <p className="mt-2 text-xs text-mute">
+              Taps ignorés pendant le repos.
+              <br />
+              Double-tape pour déverrouiller.
+            </p>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

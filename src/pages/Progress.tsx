@@ -1,4 +1,5 @@
 import { useMemo } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { BarChart, Sparkline } from '../components/Charts'
 import { FAMILY_LABELS, MOVEMENTS } from '../data/movements'
 import {
@@ -20,6 +21,7 @@ const DAY_LEVELS = ['', 'bg-volt/25', 'bg-volt/45', 'bg-volt/70', 'bg-volt']
 
 export default function Progress() {
   const workouts = useStore((s) => s.workouts)
+  const navigate = useNavigate()
   const badges = useStore((s) => s.badges)
   const player = useStore((s) => s.player)
   const spots = useStore((s) => s.spots)
@@ -153,6 +155,15 @@ export default function Progress() {
                 </span>
                 <span className="hud shrink-0 text-[11px] text-mute">{formatDuration(w.durationSec)}</span>
                 <span className="hud shrink-0 text-xs font-bold text-volt">+{w.xp}</span>
+                <button
+                  onClick={() =>
+                    navigate('/workout', { state: { movements: [...new Set(w.sets.map((s) => s.movementId))] } })
+                  }
+                  title="Refaire cette séance"
+                  className="btn shrink-0 px-2 py-1 text-[11px]"
+                >
+                  ↻
+                </button>
               </div>
             )
           })}

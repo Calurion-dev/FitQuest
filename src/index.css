@@ -319,3 +319,31 @@
     transition-duration: 0.01ms !important;
   }
 }
+
+/* ---------- Mode plein soleil ---------- */
+/* Contraste maximal + texte plus grand, activé depuis les Réglages. */
+:root[data-sun='on'] {
+  --color-ink: #000000;
+  --color-panel: #0c0c0e;
+  --color-panel-2: #16161a;
+  --color-edge: #4a4a55;
+  --color-mute: #cfcfd8;
+  font-size: 17px;
+}
+
+:root[data-sun='on'] body {
+  background: #000000;
+}
+
+:root[data-sun='on'] .text-zinc-400 {
+  color: #e4e4e7;
+}
+
+:root[data-sun='on'] .text-zinc-500,
+:root[data-sun='on'] .text-zinc-600 {
+  color: #d4d4d8;
+}
+
+:root[data-sun='on'] .text-zinc-300 {
+  color: #f4f4f5;
+}

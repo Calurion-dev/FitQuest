@@ -1,3 +1,5 @@
+import { execSync } from 'node:child_process'
+import { readFileSync } from 'node:fs'
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
@@ -7,16 +9,34 @@ import { VitePWA } from 'vite-plugin-pwa'
 // En développement on reste à la racine pour garder http://localhost:5173/.
 const PAGES_BASE = '/FitQuest/'
 
+const pkg = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf8')) as {
+  version: string
+}
+
+let commit = 'dev'
+try {
+  commit = execSync('git rev-parse --short HEAD', { stdio: ['ignore', 'pipe', 'ignore'] })
+    .toString()
+    .trim()
+} catch {
+  // Pas un dépôt git (build depuis un export) : on garde 'dev'.
+}
+
 export default defineConfig(({ command }) => {
   const base = command === 'build' ? PAGES_BASE : '/'
 
   return {
     base,
+    define: {
+      __APP_VERSION__: JSON.stringify(pkg.version),
+      __COMMIT__: JSON.stringify(commit)
+    },
     plugins: [
       react(),
       tailwindcss(),
       VitePWA({
-        registerType: 'autoUpdate',
+        // 'prompt' : on propose « Recharger » dans l'app au lieu de recharger en douce.
+        registerType: 'prompt',
         includeAssets: ['icon.svg'],
         manifest: {
           name: 'FitQuest — Street Workout RPG',
@@ -34,6 +54,11 @@ export default defineConfig(({ command }) => {
           icons: [
             { src: 'icon.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'any' },
             { src: 'icon.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'maskable' }
+          ],
+          shortcuts: [
+            { name: 'Nouvelle séance', url: './#/workout' },
+            { name: 'WOD du jour', url: './#/wods' },
+            { name: 'Carte des spots', url: './#/map' }
           ]
         },
         workbox: {
