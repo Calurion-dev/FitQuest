@@ -155,6 +155,27 @@ export default function Settings() {
               écran d'accueil pour l'utiliser comme une vraie app, même au parc sans réseau.
             </p>
           </div>
+          <div className="mt-4 border-t-2 border-dashed border-edge pt-3">
+            <div className="eyebrow mb-1.5">Crédits</div>
+            <p className="text-[11px] leading-relaxed text-mute">
+              Développé par{' '}
+              <a
+                href="https://github.com/Calurion-dev/FitQuest"
+                target="_blank"
+                rel="noreferrer"
+                className="text-ice hover:underline"
+              >
+                Calurion-dev
+              </a>{' '}
+              — React, TypeScript, Vite, Tailwind CSS. Banque de WOD compilée à partir de ces sources
+              publiques : calisthenics-parks.com, caliverse.app, callisthenies.fr, crossfit.com, darebee.com,
+              decathloncoach.com, fitnessfaqs.com, halhigdon.com, hyrox.com, jimwendler.com, madbarz.com,
+              mcmillanrunning.com, nike.com (NRC), planet-streetworkout.org, polar.com, fr.runningheroes.com,
+              runkeeper.com, solostreetworkout.com, streetlifting.com, streetparking.com, stronglifts.com,
+              thenx.com, u-run.fr, uptrackplus.com, wodwell.com, YouTube (Bar Brothers). Contenus et marques
+              cités appartiennent à leurs auteurs.
+            </p>
+          </div>
         </section>
       </div>
     </div>
