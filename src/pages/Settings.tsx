@@ -157,17 +157,23 @@ export default function Settings() {
           </div>
           <div className="mt-4 border-t-2 border-dashed border-edge pt-3">
             <div className="eyebrow mb-1.5">Crédits</div>
-            <p className="text-[11px] leading-relaxed text-mute">
-              Développé par{' '}
+            <p className="text-xs font-semibold text-zinc-300">
+              Développement —{' '}
               <a
                 href="https://github.com/Calurion-dev/FitQuest"
                 target="_blank"
                 rel="noreferrer"
                 className="text-ice hover:underline"
               >
-                Calurion-dev
-              </a>{' '}
-              — React, TypeScript, Vite, Tailwind CSS. Banque de WOD compilée à partir de ces sources
+                Calurion
+              </a>
+            </p>
+            <p className="mt-1.5 text-[11px] leading-relaxed text-mute">
+              Remerciements : <span className="font-semibold text-zinc-300">Brieuc Le Dantec</span>, pour
+              certaines routines.
+            </p>
+            <p className="mt-1.5 text-[11px] leading-relaxed text-mute">
+              React, TypeScript, Vite, Tailwind CSS. Banque de WOD compilée à partir de ces sources
               publiques : calisthenics-parks.com, caliverse.app, callisthenies.fr, crossfit.com, darebee.com,
               decathloncoach.com, fitnessfaqs.com, halhigdon.com, hyrox.com, jimwendler.com, madbarz.com,
               mcmillanrunning.com, nike.com (NRC), planet-streetworkout.org, polar.com, fr.runningheroes.com,

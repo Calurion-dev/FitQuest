@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { MOVEMENTS, movementById } from '../data/movements'
 import { uid } from '../lib/id'
@@ -46,6 +46,13 @@ export default function Routines() {
     setOpen(true)
   }
 
+  // L'éditeur s'ouvre au-dessus : on le ramène dans la vue (ex. clic depuis le planning en bas de page).
+  useEffect(() => {
+    if (open) {
+      document.getElementById('routine-editor')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+    }
+  }, [open])
+
   const patchItem = (idx: number, patch: Partial<RoutineItem>) =>
     setItems((prev) => prev.map((it, i) => (i === idx ? { ...it, ...patch } : it)))
 
@@ -77,7 +84,7 @@ export default function Routines() {
       </header>
 
       {open && (
-        <section className="card border-volt/60 p-4 md:p-5">
+        <section id="routine-editor" className="card border-volt/60 p-4 md:p-5">
           <h2 className="eyebrow">{editingId ? 'Modifier la routine' : 'Nouvelle routine'}</h2>
           <input
             value={name}
@@ -200,10 +207,10 @@ export default function Routines() {
                 {!plan.rest && (
                   <div className="mt-2 space-y-1.5">
                     {plan.routineIds.map((rid) => (
-                      <span key={rid} className="chip flex w-full items-center justify-between gap-1 text-[10px]">
+                      <span key={rid} className="flex items-center gap-1">
                         <button
                           onClick={() => setOpenRoutineId(rid)}
-                          className="min-w-0 truncate text-left hover:text-volt"
+                          className="chip min-w-0 flex-1 truncate text-left text-[10px] hover:border-volt/60"
                           aria-label="Ouvrir la routine"
                         >
                           {routines.find((r) => r.id === rid)?.name ?? '—'}
@@ -212,32 +219,40 @@ export default function Routines() {
                           onClick={() =>
                             setDayPlan(day.id, { routineIds: plan.routineIds.filter((x) => x !== rid) })
                           }
-                          className="text-mute hover:text-ember"
+                          className="px-0.5 text-mute hover:text-ember"
                           aria-label="Retirer cette routine du jour"
                         >
                           ✕
                         </button>
                       </span>
                     ))}
-                    <select
-                      value=""
-                      disabled={!free.length}
-                      onChange={(e) =>
-                        e.target.value &&
-                        setDayPlan(day.id, { routineIds: [...plan.routineIds, e.target.value] })
-                      }
-                      className="input py-1.5 text-[11px]"
-                      aria-label={`Ajouter une routine le ${day.label}`}
-                    >
-                      <option value="">
-                        {free.length ? '＋ Routine…' : routines.length ? 'Tout est planifié' : 'Aucune routine'}
-                      </option>
-                      {free.map((r) => (
-                        <option key={r.id} value={r.id}>
-                          {r.name}
-                        </option>
-                      ))}
-                    </select>
+                    {routines.length ? (
+                      <select
+                        value=""
+                        disabled={!free.length}
+                        onChange={(e) =>
+                          e.target.value &&
+                          setDayPlan(day.id, { routineIds: [...plan.routineIds, e.target.value] })
+                        }
+                        className="input py-1.5 text-[11px]"
+                        aria-label={`Ajouter une routine le ${day.label}`}
+                      >
+                        <option value="">{free.length ? '＋ Routine…' : 'Tout est planifié'}</option>
+                        {free.map((r) => (
+                          <option key={r.id} value={r.id}>
+                            {r.name}
+                          </option>
+                        ))}
+                      </select>
+                    ) : (
+                      <button
+                        onClick={() => openEditor()}
+                        className="btn w-full py-1.5 text-[11px]"
+                        aria-label={`Créer une routine pour le ${day.label}`}
+                      >
+                        ＋ Créer une routine
+                      </button>
+                    )}
                   </div>
                 )}
               </div>
