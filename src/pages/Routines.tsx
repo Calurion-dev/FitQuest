@@ -29,9 +29,11 @@ export default function Routines() {
   const [editingId, setEditingId] = useState<string | null>(null)
   const [name, setName] = useState('')
   const [items, setItems] = useState<RoutineItem[]>([])
+  const [openRoutineId, setOpenRoutineId] = useState<string | null>(null)
 
   // getDay() : 0 = dimanche → lundi = 0.
   const todayIdx = (new Date().getDay() + 6) % 7
+  const openRoutine = routines.find((r) => r.id === openRoutineId)
 
   const openEditor = (routine?: Routine) => {
     setEditingId(routine?.id ?? null)
@@ -199,7 +201,13 @@ export default function Routines() {
                   <div className="mt-2 space-y-1.5">
                     {plan.routineIds.map((rid) => (
                       <span key={rid} className="chip flex w-full items-center justify-between gap-1 text-[10px]">
-                        <span className="truncate">{routines.find((r) => r.id === rid)?.name ?? '—'}</span>
+                        <button
+                          onClick={() => setOpenRoutineId(rid)}
+                          className="min-w-0 truncate text-left hover:text-volt"
+                          aria-label="Ouvrir la routine"
+                        >
+                          {routines.find((r) => r.id === rid)?.name ?? '—'}
+                        </button>
                         <button
                           onClick={() =>
                             setDayPlan(day.id, { routineIds: plan.routineIds.filter((x) => x !== rid) })
@@ -237,6 +245,44 @@ export default function Routines() {
           })}
         </div>
       </section>
+
+      {openRoutine && (
+        <section className="animate-floaty card border-volt/60 p-4">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <div className="eyebrow">Routine planifiée</div>
+              <div className="mt-0.5 font-display text-lg uppercase">{openRoutine.name}</div>
+            </div>
+            <button
+              onClick={() => setOpenRoutineId(null)}
+              className="px-1 text-zinc-600 hover:text-ember"
+              aria-label="Fermer la routine"
+            >
+              ✕
+            </button>
+          </div>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {openRoutine.items.map((i) => {
+              const m = movementById(i.movementId)
+              return (
+                <span key={i.movementId} className="chip text-[11px]">
+                  {m?.emoji} {m?.name}
+                  <span className="hud text-mute">
+                    {i.sets}×{i.reps}
+                    {i.addedKg ? ` +${i.addedKg}kg` : ''}
+                  </span>
+                </span>
+              )
+            })}
+          </div>
+          <button
+            onClick={() => navigate('/workout', { state: { routineId: openRoutine.id } })}
+            className="btn btn-volt mt-3 w-full py-3 text-xs"
+          >
+            ▶️ Démarrer cette routine
+          </button>
+        </section>
+      )}
 
       {!routines.length && !open && (
         <p className="card border-dashed p-6 text-center text-xs text-mute">
