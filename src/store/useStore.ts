@@ -19,6 +19,7 @@ import { uid } from '../lib/id'
 import type {
   AppData,
   BadgeDef,
+  DayPlan,
   LootSummary,
   Player,
   Quest,
@@ -27,6 +28,7 @@ import type {
   Settings,
   Spot,
   StatKey,
+  WeekDay,
   Workout
 } from '../types'
 
@@ -34,6 +36,16 @@ export type AppState = AppData
 
 /** Marque les données comme modifiées à l'instant (déclenche la synchro cloud). */
 const touch = () => ({ updatedAt: new Date().toISOString() })
+
+const initialWeekPlan = (): Record<WeekDay, DayPlan> => ({
+  mon: { rest: false, routineIds: [] },
+  tue: { rest: false, routineIds: [] },
+  wed: { rest: false, routineIds: [] },
+  thu: { rest: false, routineIds: [] },
+  fri: { rest: false, routineIds: [] },
+  sat: { rest: false, routineIds: [] },
+  sun: { rest: false, routineIds: [] }
+})
 
 const initialState: AppState = {
   // Époque : tant que rien n'a été modifié localement, le cloud est considéré
@@ -48,6 +60,7 @@ const initialState: AppState = {
   },
   workouts: [],
   routines: [],
+  weekPlan: initialWeekPlan(),
   spots: [],
   reviews: [],
   quests: [],
@@ -65,6 +78,7 @@ interface Actions {
   addReview: (data: Omit<Review, 'id' | 'date'>) => void
   saveRoutine: (routine: Routine) => void
   deleteRoutine: (id: string) => void
+  setDayPlan: (day: WeekDay, patch: Partial<DayPlan>) => void
   replaceAll: (data: Partial<AppData>) => void
   resetAll: () => void
 }
@@ -108,7 +122,20 @@ export const useStore = create<AppState & Actions>()(
         })),
 
       deleteRoutine: (id) =>
-        set((s) => ({ ...touch(), routines: s.routines.filter((r) => r.id !== id) })),
+        set((s) => {
+          // Une routine supprimée disparaît aussi du planning hebdo.
+          const weekPlan = { ...s.weekPlan }
+          for (const d of Object.keys(weekPlan) as WeekDay[]) {
+            weekPlan[d] = { ...weekPlan[d], routineIds: weekPlan[d].routineIds.filter((x) => x !== id) }
+          }
+          return { ...touch(), routines: s.routines.filter((r) => r.id !== id), weekPlan }
+        }),
+
+      setDayPlan: (day, patch) =>
+        set((s) => ({
+          ...touch(),
+          weekPlan: { ...s.weekPlan, [day]: { ...s.weekPlan[day], ...patch } }
+        })),
 
       finishWorkout: (workout) => {
         const state = get()
@@ -224,6 +251,9 @@ export const useStore = create<AppState & Actions>()(
         }
         if (Array.isArray(data.workouts)) clean.workouts = data.workouts
         if (Array.isArray(data.routines)) clean.routines = data.routines
+        if (data.weekPlan && typeof data.weekPlan === 'object') {
+          clean.weekPlan = { ...initialWeekPlan(), ...data.weekPlan }
+        }
         if (Array.isArray(data.spots)) clean.spots = data.spots
         if (Array.isArray(data.reviews)) clean.reviews = data.reviews
         if (Array.isArray(data.quests)) clean.quests = data.quests
@@ -242,9 +272,10 @@ export const useStore = create<AppState & Actions>()(
     }),
     {
       name: 'swrpg-v1',
-      version: 3,
+      version: 4,
       // v1 → v2 : horodatage `updatedAt` (comparaison local/cloud).
       // v2 → v3 : routines personnelles (`routines`), valeurs par défaut sinon.
+      // v3 → v4 : planning hebdomadaire (`weekPlan`), semaine vide par défaut.
       migrate: (persisted) => {
         const p = (persisted ?? {}) as Partial<AppState>
         return {

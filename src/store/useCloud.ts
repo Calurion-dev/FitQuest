@@ -55,8 +55,9 @@ function mapUser(u: User): CloudUser {
 
 /** Extrait du store local la charge utile à synchroniser. */
 function localData(): AppData {
-  const { updatedAt, player, workouts, routines, spots, reviews, quests, badges, settings } = useStore.getState()
-  return { updatedAt, player, workouts, routines, spots, reviews, quests, badges, settings }
+  const { updatedAt, player, workouts, routines, weekPlan, spots, reviews, quests, badges, settings } =
+    useStore.getState()
+  return { updatedAt, player, workouts, routines, weekPlan, spots, reviews, quests, badges, settings }
 }
 
 let initialized = false

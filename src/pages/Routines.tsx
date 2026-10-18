@@ -3,20 +3,35 @@ import { useNavigate } from 'react-router-dom'
 import { MOVEMENTS, movementById } from '../data/movements'
 import { uid } from '../lib/id'
 import { useStore } from '../store/useStore'
-import type { Routine, RoutineItem } from '../types'
+import type { Routine, RoutineItem, WeekDay } from '../types'
 
 const clamp = (v: string, min: number, max: number) => Math.max(min, Math.min(max, Number(v) || min))
+
+const WEEK_DAYS: { id: WeekDay; label: string }[] = [
+  { id: 'mon', label: 'Lun' },
+  { id: 'tue', label: 'Mar' },
+  { id: 'wed', label: 'Mer' },
+  { id: 'thu', label: 'Jeu' },
+  { id: 'fri', label: 'Ven' },
+  { id: 'sat', label: 'Sam' },
+  { id: 'sun', label: 'Dim' }
+]
 
 export default function Routines() {
   const navigate = useNavigate()
   const routines = useStore((s) => s.routines)
+  const weekPlan = useStore((s) => s.weekPlan)
   const saveRoutine = useStore((s) => s.saveRoutine)
   const deleteRoutine = useStore((s) => s.deleteRoutine)
+  const setDayPlan = useStore((s) => s.setDayPlan)
 
   const [open, setOpen] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [name, setName] = useState('')
   const [items, setItems] = useState<RoutineItem[]>([])
+
+  // getDay() : 0 = dimanche → lundi = 0.
+  const todayIdx = (new Date().getDay() + 6) % 7
 
   const openEditor = (routine?: Routine) => {
     setEditingId(routine?.id ?? null)
@@ -149,6 +164,79 @@ export default function Routines() {
           </div>
         </section>
       )}
+
+      <section className="card p-4">
+        <h2 className="eyebrow mb-2.5">Planning de la semaine</h2>
+        <div className="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7">
+          {WEEK_DAYS.map((day, idx) => {
+            const plan = weekPlan[day.id]
+            const today = idx === todayIdx
+            const free = routines.filter((r) => !plan.routineIds.includes(r.id))
+            return (
+              <div
+                key={day.id}
+                className={`rounded-2xl border-2 p-2.5 ${today ? 'border-volt/60' : 'border-edge'} ${
+                  plan.rest ? 'bg-panel/40' : 'bg-panel'
+                }`}
+              >
+                <div className="flex items-center justify-between gap-1">
+                  <span className={`font-display text-[11px] uppercase ${today ? 'text-volt' : 'text-mute'}`}>
+                    {day.label}
+                  </span>
+                  <button
+                    onClick={() =>
+                      setDayPlan(day.id, plan.rest ? { rest: false } : { rest: true, routineIds: [] })
+                    }
+                    aria-pressed={plan.rest}
+                    className={`rounded-full border-2 px-1.5 py-0.5 text-[10px] font-bold ${
+                      plan.rest ? 'border-ember/60 text-ember' : 'border-edge text-mute hover:border-zinc-600'
+                    }`}
+                  >
+                    {plan.rest ? '😴 Repos' : '🏋️ Actif'}
+                  </button>
+                </div>
+                {!plan.rest && (
+                  <div className="mt-2 space-y-1.5">
+                    {plan.routineIds.map((rid) => (
+                      <span key={rid} className="chip flex w-full items-center justify-between gap-1 text-[10px]">
+                        <span className="truncate">{routines.find((r) => r.id === rid)?.name ?? '—'}</span>
+                        <button
+                          onClick={() =>
+                            setDayPlan(day.id, { routineIds: plan.routineIds.filter((x) => x !== rid) })
+                          }
+                          className="text-mute hover:text-ember"
+                          aria-label="Retirer cette routine du jour"
+                        >
+                          ✕
+                        </button>
+                      </span>
+                    ))}
+                    <select
+                      value=""
+                      disabled={!free.length}
+                      onChange={(e) =>
+                        e.target.value &&
+                        setDayPlan(day.id, { routineIds: [...plan.routineIds, e.target.value] })
+                      }
+                      className="input py-1.5 text-[11px]"
+                      aria-label={`Ajouter une routine le ${day.label}`}
+                    >
+                      <option value="">
+                        {free.length ? '＋ Routine…' : routines.length ? 'Tout est planifié' : 'Aucune routine'}
+                      </option>
+                      {free.map((r) => (
+                        <option key={r.id} value={r.id}>
+                          {r.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+              </div>
+            )
+          })}
+        </div>
+      </section>
 
       {!routines.length && !open && (
         <p className="card border-dashed p-6 text-center text-xs text-mute">

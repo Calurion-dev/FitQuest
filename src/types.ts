@@ -102,12 +102,21 @@ export interface Routine {
   items: RoutineItem[]
 }
 
+export type WeekDay = 'mon' | 'tue' | 'wed' | 'thu' | 'fri' | 'sat' | 'sun'
+
+/** Planning d'un jour de la semaine : repos, ou une à plusieurs routines prévues. */
+export interface DayPlan {
+  rest: boolean
+  routineIds: string[]
+}
+
 export interface AppData {
   /** Date ISO de la dernière modification locale (sert à comparer avec le cloud). */
   updatedAt: string
   player: Player
   workouts: Workout[]
   routines: Routine[]
+  weekPlan: Record<WeekDay, DayPlan>
   spots: Spot[]
   reviews: Review[]
   quests: Quest[]
