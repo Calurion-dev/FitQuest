@@ -15,11 +15,15 @@ import { useStore } from './store/useStore'
 
 export default function App() {
   const ensureQuests = useStore((s) => s.ensureQuests)
+  const settleLeague = useStore((s) => s.settleLeague)
+  const settleWager = useStore((s) => s.settleWager)
   const initCloud = useCloud((s) => s.init)
 
   useEffect(() => {
     ensureQuests()
-  }, [ensureQuests])
+    settleLeague()
+    settleWager()
+  }, [ensureQuests, settleLeague, settleWager])
 
   useEffect(() => {
     initCloud()

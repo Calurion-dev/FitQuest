@@ -1,11 +1,12 @@
-import { movementTotals } from './engine'
-import type { BadgeDef, Player, Quest, Workout } from '../types'
+import { isPrEligible, movementTotals, perfectWeeks } from './engine'
+import type { BadgeDef, DayPlan, Player, Quest, WeekDay, Workout } from '../types'
 
 export interface BadgeCtx {
   workouts: Workout[]
   player: Player
   quests: Quest[]
   level: number
+  weekPlan: Record<WeekDay, DayPlan>
 }
 
 export interface Badge extends BadgeDef {
@@ -14,7 +15,7 @@ export interface Badge extends BadgeDef {
 
 const anySet = (ctx: BadgeCtx, movementId: string, min: number): boolean =>
   ctx.workouts.some((w) =>
-    w.sets.some((s) => s.movementId === movementId && (s.reps ?? s.seconds ?? 0) >= min)
+    w.sets.some((s) => s.movementId === movementId && isPrEligible(s) && (s.reps ?? s.seconds ?? 0) >= min)
   )
 
 export const BADGES: Badge[] = [
@@ -30,5 +31,10 @@ export const BADGES: Badge[] = [
   { id: 'streak_7', name: 'Feu sacré', description: "7 jours d'entraînement d'affilée", icon: '🔥', check: (c) => c.player.streakDays >= 7 },
   { id: 'streak_30', name: 'Légende', description: "30 jours d'entraînement d'affilée", icon: '🐉', check: (c) => c.player.streakDays >= 30 },
   { id: 'level_10', name: 'Vétéran', description: 'Atteindre le niveau 10', icon: '⭐', check: (c) => c.level >= 10 },
-  { id: 'boss_slayer', name: 'Tueur de boss', description: 'Vaincre un boss mensuel', icon: '⚔️', check: (c) => c.quests.some((q) => q.type === 'boss' && q.claimed) }
+  { id: 'boss_slayer', name: 'Tueur de boss', description: 'Vaincre un boss mensuel', icon: '⚔️', check: (c) => c.quests.some((q) => q.type === 'boss' && q.claimed) },
+  { id: 'discipline', name: 'Discipline', description: 'Terminer un défi 21 jours', icon: '🗓️', check: (c) => Boolean(c.player.challenge?.awarded.includes(21)) },
+  { id: 'semaine_4', name: 'Mois béton', description: "4 semaines parfaites d'affilée", icon: '📅', check: (c) => perfectWeeks(c.workouts, c.weekPlan) >= 4 },
+  { id: 'semaine_12', name: 'Trimestre carré', description: "12 semaines parfaites d'affilée", icon: '🧱', check: (c) => perfectWeeks(c.workouts, c.weekPlan) >= 12 },
+  { id: 'semaine_26', name: 'Semestre en acier', description: "26 semaines parfaites d'affilée", icon: '🏗️', check: (c) => perfectWeeks(c.workouts, c.weekPlan) >= 26 },
+  { id: 'semaine_52', name: 'Année parfaite', description: "52 semaines parfaites d'affilée", icon: '🏆', check: (c) => perfectWeeks(c.workouts, c.weekPlan) >= 52 }
 ]

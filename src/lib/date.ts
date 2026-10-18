@@ -9,6 +9,13 @@ export function dateFromKey(key: string): Date {
   return new Date(`${key}T12:00:00`)
 }
 
+/** Décale une clé de jour de `days` jours (base midi : insensible au changement d'heure). */
+export function addDaysToKey(key: string, days: number): string {
+  const d = dateFromKey(key)
+  d.setDate(d.getDate() + days)
+  return dayKey(d)
+}
+
 export function weekKey(d: Date = new Date()): string {
   const date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()))
   const dayNum = date.getUTCDay() || 7

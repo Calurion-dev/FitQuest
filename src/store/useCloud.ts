@@ -55,9 +55,10 @@ function mapUser(u: User): CloudUser {
 
 /** Extrait du store local la charge utile à synchroniser. */
 function localData(): AppData {
-  const { updatedAt, player, workouts, routines, weekPlan, spots, reviews, quests, badges, settings } =
+  const { updatedAt, player, workouts, routines, weekPlan, spots, reviews, quests, badges, settings, favorites } =
     useStore.getState()
-  return { updatedAt, player, workouts, routines, weekPlan, spots, reviews, quests, badges, settings }
+  // Le brouillon de séance reste local (jamais synchronisé).
+  return { updatedAt, player, workouts, routines, weekPlan, spots, reviews, quests, badges, settings, favorites, draft: null }
 }
 
 let initialized = false
