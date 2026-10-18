@@ -92,6 +92,8 @@ export interface RoutineItem {
   /** Objectif : nombre de séries et répétitions (ou secondes) par série. */
   sets: number
   reps: number
+  /** Lest cible en kg pour ce mouvement (optionnel). */
+  addedKg?: number
 }
 
 export interface Routine {

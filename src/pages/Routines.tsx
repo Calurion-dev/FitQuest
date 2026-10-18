@@ -106,6 +106,19 @@ export default function Routines() {
                       className="input w-20 text-center"
                     />
                   </label>
+                  <label className="flex items-center gap-1.5 text-[11px] text-mute">
+                    lest kg
+                    <input
+                      type="number"
+                      min={0}
+                      max={200}
+                      step={0.5}
+                      placeholder="0"
+                      value={item.addedKg ?? 0}
+                      onChange={(e) => patchItem(idx, { addedKg: clamp(e.target.value, 0, 200) })}
+                      className="input w-16 text-center"
+                    />
+                  </label>
                   <button
                     onClick={() => setItems((prev) => prev.filter((_, i) => i !== idx))}
                     className="btn px-3 py-2 text-xs"
@@ -160,6 +173,7 @@ export default function Routines() {
                     {m?.emoji} {m?.name}
                     <span className="hud text-mute">
                       {i.sets}×{i.reps}
+                      {i.addedKg ? ` +${i.addedKg}kg` : ''}
                     </span>
                   </span>
                 )

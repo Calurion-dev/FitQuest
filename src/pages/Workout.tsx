@@ -100,8 +100,9 @@ export default function WorkoutPage() {
     setCurrent(id)
     const m = movementById(id)
     setAmount(targets[id]?.reps ?? (m?.isHold ? 30 : 10))
-    // Le lest est propre au mouvement courant (gilet de traction ≠ squat au poids du corps).
-    setWeight('')
+    // Le lest est propre au mouvement courant, pré-rempli si la routine en définit un.
+    const targetKg = targets[id]?.addedKg
+    setWeight(targetKg ? String(targetKg) : '')
   }
 
   const start = () => {
@@ -331,6 +332,7 @@ export default function WorkoutPage() {
                     {m?.emoji} {m?.name}
                     <span className="hud text-mute">
                       {i.sets}×{i.reps}
+                      {i.addedKg ? ` +${i.addedKg}kg` : ''}
                     </span>
                   </span>
                 )
@@ -474,6 +476,7 @@ export default function WorkoutPage() {
                 <div className="hud mt-1 text-[11px] text-volt">
                   Objectif {targets[currentMovement.id].sets} × {targets[currentMovement.id].reps}
                   {currentMovement.isHold ? ' s' : ''}
+                  {targets[currentMovement.id].addedKg ? ` · +${targets[currentMovement.id].addedKg}kg` : ''}
                 </div>
               )}
               <div className="hud my-3 text-6xl font-bold leading-none md:text-7xl">{amount}</div>
