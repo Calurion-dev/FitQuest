@@ -168,6 +168,9 @@ export default function Settings() {
                 Calurion
               </a>
             </p>
+            <p className="mt-1.5 text-xs font-semibold text-zinc-300">
+              © {new Date().getFullYear()} Calurion — Tous droits réservés.
+            </p>
             <p className="mt-1.5 text-[11px] leading-relaxed text-mute">
               Remerciements : <span className="font-semibold text-zinc-300">Brieuc Le Dantec</span>, pour
               certaines routines.
