@@ -17,6 +17,7 @@ import { CHALLENGES, challengeById, challengeDoneDays, challengeFinished } from 
 import { rankProgress } from '../game/ranks'
 import { wodOfDay } from '../game/wodOfDay'
 import { dateFromKey, dayKey, weekKey } from '../lib/date'
+import { useT } from '../lib/i18n'
 import { useStore } from '../store/useStore'
 import type { Family, Quest, StatKey, Workout } from '../types'
 
@@ -68,6 +69,7 @@ function StatBar({ stat, xp }: { stat: StatKey; xp: number }) {
 
 export default function Home() {
   const navigate = useNavigate()
+  const t = useT()
   const player = useStore((s) => s.player)
   const workouts = useStore((s) => s.workouts)
   const quests = useStore((s) => s.quests)
@@ -92,13 +94,10 @@ export default function Home() {
             FIT<span className="text-volt">QUEST</span>
           </div>
           <div className="tape mx-auto mt-4 w-40 rounded-full" />
-          <p className="mt-4 text-sm leading-relaxed text-zinc-400">
-            Tes pompes, dips et tractions deviennent de l'XP, des niveaux, des quêtes et des boss à
-            vaincre. Crée ton héros pour lancer le compteur.
-          </p>
+          <p className="mt-4 text-sm leading-relaxed text-zinc-400">{t('home.intro')}</p>
         </div>
         <div className="card mx-auto w-full max-w-md p-4">
-          <div className="eyebrow mb-2">Nom de héros</div>
+          <div className="eyebrow mb-2">{t('home.heroName')}</div>
           <input
             value={name}
             onChange={(e) => setName(e.target.value)}
@@ -110,7 +109,7 @@ export default function Home() {
             onClick={() => setPseudo(name.trim())}
             className="btn btn-volt mt-3 w-full py-4 text-base"
           >
-            Créer mon héros
+            {t('home.heroCreate')}
           </button>
         </div>
       </div>
@@ -160,7 +159,7 @@ export default function Home() {
     <div className="space-y-5 md:space-y-6">
       <header className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <div className="eyebrow">Héros</div>
+          <div className="eyebrow">{t('home.eyebrow')}</div>
           <h1 className="mt-0.5 text-3xl uppercase md:text-4xl">{player.pseudo}</h1>
           <div className="mt-2 flex items-center gap-2">
             <RankBadge from={rank.rank.from} to={rank.rank.to} label={rank.rank.label} size={26} />
@@ -173,7 +172,7 @@ export default function Home() {
           <span className="text-xl leading-none">🔥</span>
           <div>
             <div className="hud text-lg font-bold leading-none">{player.streakDays}</div>
-            <div className="eyebrow mt-1">jours d'affilée</div>
+            <div className="eyebrow mt-1">{t('home.streak')}</div>
           </div>
         </div>
       </header>
@@ -185,7 +184,7 @@ export default function Home() {
             <div className="tape absolute inset-x-0 top-0" />
             <div className="mt-2 flex items-end justify-between gap-4">
               <div>
-                <div className="eyebrow">Niveau</div>
+                <div className="eyebrow">{t('home.level')}</div>
                 <div className="hud text-5xl font-bold leading-none md:text-6xl">
                   {String(info.level).padStart(2, '0')}
                 </div>
@@ -197,7 +196,7 @@ export default function Home() {
                 <div className="hud text-2xl font-bold leading-none">
                   {player.xpTotal.toLocaleString('fr-FR')}
                 </div>
-                <div className="eyebrow mt-1.5">XP total</div>
+                <div className="eyebrow mt-1.5">{t('home.xpTotal')}</div>
               </div>
             </div>
             <div className="bar mt-4 h-3">
@@ -206,31 +205,31 @@ export default function Home() {
             {bonus > 0 && (
               <div className="mt-4 flex items-center gap-2 text-xs">
                 <span className="sticker">+{bonus}% XP</span>
-                <span className="text-zinc-300">Bonus régularité actif (3 séances cette semaine)</span>
+                <span className="text-zinc-300">{t('home.bonusNote')}</span>
               </div>
             )}
             <button onClick={() => navigate('/workout')} className="btn btn-volt mt-5 w-full py-4 text-base">
-              💪 Démarrer une séance
+              {t('home.start')}
             </button>
           </section>
 
           <section className="card p-4">
             <div className="flex items-center justify-between gap-3">
               <div className="min-w-0">
-                <p className="eyebrow">📚 WOD du jour</p>
+                <p className="eyebrow">{t('home.wodOfDay')}</p>
                 <div className="mt-1 truncate font-display text-sm uppercase">{todaysWod.name}</div>
                 <div className="mt-0.5 truncate text-xs text-mute">
                   {todaysWod.format} · {todaysWod.level} · <span className="text-volt">+50 XP bonus</span>
                 </div>
               </div>
               {wodDone ? (
-                <span className="sticker shrink-0">fait ✅</span>
+                <span className="sticker shrink-0">{t('home.done')}</span>
               ) : (
                 <button
                   onClick={() => navigate('/workout', { state: { wodId: todaysWod.id } })}
                   className="btn btn-volt shrink-0 px-3 py-2 text-xs"
                 >
-                  Faire ⚡
+                  {t('home.do')}
                 </button>
               )}
             </div>
@@ -239,20 +238,20 @@ export default function Home() {
           <section className="grid grid-cols-3 gap-2.5 md:gap-3">
             <div className="stat">
               <div className="hud text-xl font-bold">{workouts.length}</div>
-              <div className="eyebrow mt-1">séances</div>
+              <div className="eyebrow mt-1">{t('home.sessions')}</div>
             </div>
             <div className="stat">
               <div className="hud text-xl font-bold">{reps.toLocaleString('fr-FR')}</div>
-              <div className="eyebrow mt-1">répétitions</div>
+              <div className="eyebrow mt-1">{t('home.reps')}</div>
             </div>
             <div className="stat">
               <div className="hud text-xl font-bold">{visited}</div>
-              <div className="eyebrow mt-1">spots visités</div>
+              <div className="eyebrow mt-1">{t('home.spots')}</div>
             </div>
           </section>
 
           <section className="card p-4">
-            <h2 className="eyebrow mb-3.5">Stats RPG</h2>
+            <h2 className="eyebrow mb-3.5">{t('home.stats')}</h2>
             <div className="grid gap-4 md:grid-cols-2 md:gap-x-6">
               {(Object.keys(player.stats) as StatKey[]).map((k) => (
                 <StatBar key={k} stat={k} xp={player.stats[k]} />
@@ -263,11 +262,11 @@ export default function Home() {
           {settings.postStretch && workouts.length > 0 && (
             <section className="card flex items-center justify-between gap-3 p-4">
               <div>
-                <h2 className="eyebrow">Récupération</h2>
-                <p className="mt-1 text-xs text-mute">Étirements guidés (~5 min) après tes séances.</p>
+                <h2 className="eyebrow">{t('home.recovery')}</h2>
+                <p className="mt-1 text-xs text-mute">{t('home.recoveryNote')}</p>
               </div>
               <button onClick={() => setRecoveryOpen(true)} className="btn shrink-0 px-3 py-2 text-xs">
-                🧘 Étirements
+                {t('home.stretch')}
               </button>
             </section>
           )}
@@ -279,9 +278,9 @@ export default function Home() {
           {showReport && (
             <section className="card border-2 border-volt p-4">
               <div className="flex items-center justify-between gap-2">
-                <h2 className="eyebrow">📊 Ta semaine dernière</h2>
+                <h2 className="eyebrow">{t('home.lastWeek')}</h2>
                 <button onClick={() => markReportSeen(wk)} className="btn px-2.5 py-1 text-[11px]">
-                  Compris
+                  {t('home.understood')}
                 </button>
               </div>
               <div className="hud mt-2 text-2xl font-bold">
@@ -304,20 +303,17 @@ export default function Home() {
           )}
           {showDeload && (
             <section className="card border-2 border-ice/50 p-4">
-              <h2 className="eyebrow">🪶 Récupération</h2>
-              <p className="mt-2 text-xs text-mute">
-                {weeksSinceStart} semaines d'entraînement régulier. Une semaine allégée (volume réduit, records gelés) te
-                fera repartir plus fort.
-              </p>
+              <h2 className="eyebrow">🪶 {t('home.recovery')}</h2>
+              <p className="mt-2 text-xs text-mute">{t('home.deloadText', { n: weeksSinceStart })}</p>
               <div className="mt-3 grid grid-cols-2 gap-2">
                 <button onClick={() => acceptDeload()} className="btn px-3 py-2 text-xs">
-                  OK, semaine légère
+                  {t('home.deloadOk')}
                 </button>
                 <button onClick={() => dismissDeload()} className="btn px-3 py-2 text-xs">
-                  Plus tard
+                  {t('home.deloadLater')}
                 </button>
               </div>
-              <p className="mt-2 text-[10px] text-zinc-600">Astuce : active « Séance allégée » au début de ta séance.</p>
+              <p className="mt-2 text-[10px] text-zinc-600">{t('home.deloadHint')}</p>
             </section>
           )}
           {boss && (
@@ -333,7 +329,7 @@ export default function Home() {
                 <span className="text-2xl">{boss.icon}</span>
                 <div className="min-w-0">
                   <div className="eyebrow" style={{ color: 'var(--color-ember)' }}>
-                    Boss en cours
+                    {t('home.boss')}
                   </div>
                   <div className="truncate font-display text-sm uppercase">{boss.title}</div>
                 </div>
@@ -347,7 +343,7 @@ export default function Home() {
 
           {wager && (
             <section className="card p-4">
-              <h2 className="eyebrow">🎯 Pari de série</h2>
+              <h2 className="eyebrow">{t('home.wager')}</h2>
               {wager.result === 'active' ? (
                 <>
                   <p className="mt-1 text-xs text-mute">
@@ -375,7 +371,7 @@ export default function Home() {
           )}
           {!wager && wagerStake >= 50 && (
             <section className="card p-4">
-              <h2 className="eyebrow">🎯 Pari de série</h2>
+              <h2 className="eyebrow">{t('home.wager')}</h2>
               <p className="mt-1 text-xs text-mute">
                 Parie {wagerStake} XP : entraîne-toi 7 jours d'affilée et récupère le double. Un jour manqué,
                 la mise est perdue.
@@ -387,7 +383,7 @@ export default function Home() {
           )}
 
           <section className="card p-4">
-            <h2 className="eyebrow">🗓️ Défi 21 jours</h2>
+            <h2 className="eyebrow">{t('home.challenge')}</h2>
             {player.challenge && challengeDef ? (
               <>
                 <div className="mt-1 font-display text-sm uppercase">
@@ -433,7 +429,7 @@ export default function Home() {
           </section>
 
           <section>
-            <h2 className="eyebrow mb-2.5">Quêtes du jour</h2>
+            <h2 className="eyebrow mb-2.5">{t('home.daily')}</h2>
             <div className="space-y-2.5">
               {daily.map((q) => (
                 <QuestRow key={q.id} quest={q} workouts={workouts} />
@@ -442,7 +438,7 @@ export default function Home() {
           </section>
 
           <section>
-            <h2 className="eyebrow mb-2.5">Cette semaine</h2>
+            <h2 className="eyebrow mb-2.5">{t('home.weekly')}</h2>
             <div className="space-y-2.5">
               {weekly.map((q) => (
                 <QuestRow key={q.id} quest={q} workouts={workouts} />

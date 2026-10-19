@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { WODS, WOD_CATEGORIES, type Wod, type WodCategory } from '../data/wods'
 import { wodDayBoard, wodOfDay } from '../game/wodOfDay'
 import { dayKey } from '../lib/date'
+import { useT } from '../lib/i18n'
 import { useStore } from '../store/useStore'
 
 const normalize = (s: string) =>
@@ -55,6 +56,7 @@ const FMT_LABELS: Record<FmtBucket, string> = { amrap: 'AMRAP', emom: 'EMOM', fo
 
 export default function Wods() {
   const navigate = useNavigate()
+  const t = useT()
   const workouts = useStore((s) => s.workouts)
   const favorites = useStore((s) => s.favorites)
   const toggleFavorite = useStore((s) => s.toggleFavorite)
@@ -110,38 +112,36 @@ export default function Wods() {
   return (
     <div className="space-y-5">
       <header>
-        <div className="eyebrow">Banque de séances</div>
+        <div className="eyebrow">{t('wods.eyebrow')}</div>
         <h1 className="mt-0.5 text-3xl uppercase md:text-4xl">
           WOD<span className="text-volt">s</span>
         </h1>
-        <p className="mt-1 text-xs text-mute">
-          {WODS.length} séances calisthénie, street lifting et course — sources en bas de chaque fiche.
-        </p>
+        <p className="mt-1 text-xs text-mute">{t('wods.subtitle', { n: WODS.length })}</p>
       </header>
 
       <section className="card border-2 border-volt p-4">
         <div className="flex items-center justify-between gap-3">
           <div className="min-w-0">
-            <div className="eyebrow">📚 WOD du jour</div>
+            <div className="eyebrow">{t('wods.wodOfDay')}</div>
             <div className="mt-1 truncate font-display text-sm uppercase">{todaysWod.name}</div>
             <div className="mt-0.5 truncate text-xs text-mute">
               {todaysWod.format} · {todaysWod.level} · <span className="text-volt">+50 XP bonus</span>
             </div>
           </div>
           {doneToday ? (
-            <span className="sticker shrink-0">fait ✅</span>
+            <span className="sticker shrink-0">{t('home.done')}</span>
           ) : (
             <button
               onClick={() => navigate('/workout', { state: { wodId: todaysWod.id } })}
               className="btn btn-volt shrink-0 px-3 py-2 text-xs"
             >
-              Faire ⚡
+              {t('wods.doIt')}
             </button>
           )}
         </div>
 
         <div className="mt-3 space-y-1 border-t-2 border-edge pt-2.5">
-          <div className="eyebrow">🏁 Classement du jour</div>
+          <div className="eyebrow">{t('wods.board')}</div>
           {board.rows.map((r, i) => (
             <div
               key={`${r.name}-${i}`}
@@ -159,18 +159,14 @@ export default function Wods() {
               </span>
             </div>
           ))}
-          {!doneToday && (
-            <p className="pt-1 text-[10px] text-zinc-500">
-              Fais le WOD du jour pour entrer au classement. Rivaux simulés.
-            </p>
-          )}
+          {!doneToday && <p className="pt-1 text-[10px] text-zinc-500">{t('wods.boardNote')}</p>}
         </div>
       </section>
 
       <input
         value={q}
         onChange={(e) => setQ(e.target.value)}
-        placeholder="Chercher un WOD, un mouvement, une distance…"
+        placeholder={t('wods.search')}
         aria-label="Rechercher un WOD"
         className="input"
       />
@@ -208,10 +204,10 @@ export default function Wods() {
           aria-pressed={favOnly}
           className={`chip ${favOnly ? 'chip-on' : ''}`}
         >
-          ⭐ Favoris <span className="hud">{favorites.length}</span>
+          {t('wods.favorites')} <span className="hud">{favorites.length}</span>
         </button>
         <button onClick={surprisePick} disabled={!visible.length} className="chip">
-          🎲 Surprends-moi
+          {t('wods.surprise')}
         </button>
       </div>
 
@@ -241,7 +237,7 @@ export default function Wods() {
       {surprise && (
         <section className="card card-volt p-4 animate-pop">
           <div className="flex items-center justify-between gap-2">
-            <div className="eyebrow">🎲 Séance surprise</div>
+            <div className="eyebrow">{t('wods.surpriseTitle')}</div>
             <button onClick={() => setSurprise(null)} aria-label="Fermer" className="btn px-2.5 py-1 text-[11px]">
               ✕
             </button>
@@ -256,7 +252,7 @@ export default function Wods() {
               onClick={() => navigate('/workout', { state: { wodId: surprise.id } })}
               className="btn btn-volt flex-1 py-2.5 text-xs"
             >
-              ▶️ Faire cette séance
+              {t('wods.doThis')}
             </button>
             <button onClick={surprisePick} aria-label="Relancer le dé" className="btn px-3 py-2.5 text-xs">
               🎲
@@ -266,9 +262,7 @@ export default function Wods() {
       )}
 
       {visible.length === 0 && (
-        <p className="card border-dashed p-6 text-center text-xs text-mute">
-          Aucun WOD ne correspond. Essaie « run », « tractions », « AMRAP » ou retire des filtres.
-        </p>
+        <p className="card border-dashed p-6 text-center text-xs text-mute">{t('wods.empty')}</p>
       )}
 
       <div className="flex items-center gap-3">
@@ -302,7 +296,7 @@ export default function Wods() {
                 <h3 className="pr-8 font-display text-base uppercase leading-tight">{w.name}</h3>
                 <div className="mt-1.5 flex flex-wrap items-center gap-2">
                   <span className="sticker">{w.format}</span>
-                  {doneIds.has(w.id) && <span className="sticker">fait ✅</span>}
+                  {doneIds.has(w.id) && <span className="sticker">{t('home.done')}</span>}
                 </div>
                 <p className="mt-2 flex-1 text-xs leading-relaxed text-zinc-400">{w.detail}</p>
                 <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t-2 border-edge pt-2.5">
@@ -313,7 +307,7 @@ export default function Wods() {
                       className="chip"
                       aria-label={`Lancer ${w.name}`}
                     >
-                      ▶️ Faire
+                      {t('wods.do')}
                     </button>
                     {w.source && (
                       <a

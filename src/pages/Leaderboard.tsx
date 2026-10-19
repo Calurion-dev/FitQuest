@@ -6,11 +6,13 @@ import { DIVISIONS, ZONE, leagueRows, myPosition } from '../game/league'
 import { RANKS, rankProgress } from '../game/ranks'
 import { RIVALS } from '../game/rivals'
 import { weekKey } from '../lib/date'
+import { useT } from '../lib/i18n'
 import { useCloud } from '../store/useCloud'
 import { useStore } from '../store/useStore'
 
 export default function Leaderboard() {
   const player = useStore((s) => s.player)
+  const t = useT()
   const workouts = useStore((s) => s.workouts)
   const dismissLeagueResult = useStore((s) => s.dismissLeagueResult)
   const progress = rankProgress(player.xpTotal)
@@ -37,12 +39,12 @@ export default function Leaderboard() {
   return (
     <div className="space-y-5 md:space-y-6">
       <header>
-        <div className="eyebrow">Ligue</div>
-        <h1 className="mt-0.5 text-3xl uppercase md:text-4xl">Classement</h1>
+        <div className="eyebrow">{t('lb.eyebrow')}</div>
+        <h1 className="mt-0.5 text-3xl uppercase md:text-4xl">{t('lb.title')}</h1>
         <p className="mt-1.5 text-xs text-mute">
-          Ton rang grimpe avec ton XP total, comme dans le mode Classé de Fortnite.{' '}
+          {t('lb.subtitle')}{' '}
           <Link to="/niveau" className="text-ice hover:underline">
-            🧮 Estime ton niveau →
+            {t('lb.estim')}
           </Link>
         </p>
       </header>

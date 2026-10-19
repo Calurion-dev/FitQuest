@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { CloudAccount } from '../components/CloudAccount'
 import { dayKey } from '../lib/date'
 import { readErrors } from '../lib/errors'
+import { LANGS, useT } from '../lib/i18n'
 import { useStore } from '../store/useStore'
 
 const REST_OPTIONS = [60, 90, 120, 180]
@@ -25,6 +26,7 @@ export default function Settings() {
   const setSettings = useStore((s) => s.setSettings)
   const replaceAll = useStore((s) => s.replaceAll)
   const resetAll = useStore((s) => s.resetAll)
+  const t = useT()
 
   const [name, setName] = useState(player.pseudo)
   const [message, setMessage] = useState<string | null>(null)
@@ -104,7 +106,7 @@ export default function Settings() {
         aria-pressed={value}
         onClick={() => onChange(!value)}
       >
-        {value ? 'Activé' : 'Désactivé'}
+        {value ? t('settings.on') : t('settings.off')}
       </button>
     </div>
   )
@@ -112,13 +114,34 @@ export default function Settings() {
   return (
     <div className="space-y-5 md:space-y-6">
       <header>
-        <div className="eyebrow">Configuration</div>
-        <h1 className="mt-0.5 text-3xl uppercase md:text-4xl">Réglages</h1>
+        <div className="eyebrow">{t('settings.eyebrow')}</div>
+        <h1 className="mt-0.5 text-3xl uppercase md:text-4xl">{t('settings.title')}</h1>
       </header>
 
       <div className="grid gap-4 md:grid-cols-2 lg:gap-5">
+        <section className="card p-4 md:col-span-2">
+          <h2 className="eyebrow mb-3">{t('settings.language')}</h2>
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+            {LANGS.map((l) => {
+              const active = (settings.lang ?? 'auto') === l.id
+              return (
+                <button
+                  key={l.id}
+                  onClick={() => setSettings({ lang: l.id === 'auto' ? undefined : l.id })}
+                  className={`rounded-xl border-2 py-2.5 text-sm font-bold transition-colors ${
+                    active ? 'border-volt bg-volt text-ink' : 'border-edge bg-panel text-mute hover:border-zinc-600'
+                  }`}
+                >
+                  {l.id === 'auto' ? t('settings.auto') : l.label}
+                </button>
+              )
+            })}
+          </div>
+          <p className="mt-2 text-[11px] text-mute">{t('layout.localData')}</p>
+        </section>
+
         <section className="card p-4">
-          <h2 className="eyebrow mb-3">Héros</h2>
+          <h2 className="eyebrow mb-3">{t('settings.hero')}</h2>
           <div className="flex gap-2">
             <input value={name} onChange={(e) => setName(e.target.value)} className="input flex-1" />
             <button
@@ -134,7 +157,7 @@ export default function Settings() {
         <CloudAccount />
 
         <section className="card p-4">
-          <h2 className="eyebrow mb-3">Repos par défaut entre les séries</h2>
+          <h2 className="eyebrow mb-3">{t('settings.rest')}</h2>
           <div className="grid grid-cols-4 gap-2">
             {REST_OPTIONS.map((r) => (
               <button
@@ -150,7 +173,7 @@ export default function Settings() {
               </button>
             ))}
           </div>
-          <h2 className="eyebrow mt-4 mb-2">Son de l'app</h2>
+          <h2 className="eyebrow mt-4 mb-2">{t('settings.sound')}</h2>
           <div className="grid grid-cols-3 gap-2">
             {SOUND_OPTIONS.map((o) => (
               <button
@@ -162,27 +185,27 @@ export default function Settings() {
                     : 'border-edge bg-panel text-mute hover:border-zinc-600'
                 }`}
               >
-                {o.label}
+                {o.id === 'low' ? t('settings.soundLow') : o.label}
               </button>
             ))}
           </div>
         </section>
 
         <section className="card p-4">
-          <h2 className="eyebrow mb-2">Confort en séance</h2>
-          {toggleRow("Garder l'écran allumé pendant la séance", settings.wakeLock, (v) =>
+          <h2 className="eyebrow mb-2">{t('settings.comfort')}</h2>
+          {toggleRow(t('settings.wakeLock'), settings.wakeLock, (v) =>
             setSettings({ wakeLock: v })
           )}
-          {toggleRow('Mode plein soleil (contraste max)', settings.sunMode, (v) =>
+          {toggleRow(t('settings.sunMode'), settings.sunMode, (v) =>
             setSettings({ sunMode: v })
           )}
-          {toggleRow('Échauffement avant la séance', settings.warmup, (v) =>
+          {toggleRow(t('settings.warmup'), settings.warmup, (v) =>
             setSettings({ warmup: v })
           )}
-          {toggleRow('Étirements après la séance', settings.postStretch, (v) =>
+          {toggleRow(t('settings.postStretch'), settings.postStretch, (v) =>
             setSettings({ postStretch: v })
           )}
-          <h2 className="eyebrow mt-4 mb-2">Unités de lest</h2>
+          <h2 className="eyebrow mt-4 mb-2">{t('settings.units')}</h2>
           <div className="grid grid-cols-2 gap-2">
             {(['kg', 'lbs'] as const).map((u) => (
               <button
@@ -194,14 +217,14 @@ export default function Settings() {
                     : 'border-edge bg-panel text-mute hover:border-zinc-600'
                 }`}
               >
-                {u === 'kg' ? 'Kilogrammes' : 'Livres'}
+                {u === 'kg' ? t('settings.kg') : t('settings.lbs')}
               </button>
             ))}
           </div>
         </section>
 
         <section className="card p-4">
-          <h2 className="eyebrow mb-2">Données</h2>
+          <h2 className="eyebrow mb-2">{t('settings.data')}</h2>
           <p className="mb-3.5 text-xs leading-relaxed text-mute">
             <span className="hud">{workouts.length}</span> séance{workouts.length > 1 ? 's' : ''} ·{' '}
             <span className="hud">{spots.length}</span> spot{spots.length > 1 ? 's' : ''} ·{' '}
@@ -218,10 +241,10 @@ export default function Settings() {
           </p>
           <div className="grid grid-cols-2 gap-2">
             <button onClick={exportData} className="btn py-3 text-xs">
-              ⬇️ Exporter
+              {t('settings.export')}
             </button>
             <button onClick={() => fileRef.current?.click()} className="btn py-3 text-xs">
-              ⬆️ Importer
+              {t('settings.import')}
             </button>
           </div>
           <input
@@ -258,9 +281,9 @@ export default function Settings() {
             }}
             className="btn btn-danger mt-3 w-full py-3 text-xs"
           >
-            🗑️ Tout réinitialiser
+            {t('settings.reset')}
           </button>
-          <p className="mt-2 text-center text-[11px] text-mute">Cette action est irréversible.</p>
+          <p className="mt-2 text-center text-[11px] text-mute">{t('settings.resetHint')}</p>
         </section>
 
         <section className="card relative overflow-hidden p-4 md:col-span-2">

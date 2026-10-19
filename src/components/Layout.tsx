@@ -2,19 +2,20 @@ import { useEffect, useState } from 'react'
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { useRegisterSW } from 'virtual:pwa-register/react'
 import { logError } from '../lib/errors'
+import { detectLang, useT } from '../lib/i18n'
 import { currentDayKey, useStore } from '../store/useStore'
 import { useUndo } from '../store/undo'
 
-const TABS = [
-  { to: '/', label: 'Héros', icon: '🦸' },
-  { to: '/workout', label: 'Séance', icon: '💪' },
-  { to: '/routines', label: 'Routines', icon: '📋' },
-  { to: '/wods', label: 'WODs', icon: '📚' },
-  { to: '/map', label: 'Spots', icon: '🗺️' },
-  { to: '/bodygraph', label: 'Body graph', short: 'Muscles', icon: '🧍' },
-  { to: '/progress', label: 'Progrès', icon: '📈' },
-  { to: '/leaderboard', label: 'Classement', short: 'Rangs', icon: '🏆' },
-  { to: '/settings', label: 'Réglages', icon: '⚙️' }
+const TABS: { to: string; key: string; keyShort?: string; icon: string }[] = [
+  { to: '/', key: 'nav.hero', icon: '🦸' },
+  { to: '/workout', key: 'nav.workout', icon: '💪' },
+  { to: '/routines', key: 'nav.routines', icon: '📋' },
+  { to: '/wods', key: 'nav.wods', icon: '📚' },
+  { to: '/map', key: 'nav.map', icon: '🗺️' },
+  { to: '/bodygraph', key: 'nav.bodygraph', keyShort: 'nav.bodygraph.short', icon: '🧍' },
+  { to: '/progress', key: 'nav.progress', icon: '📈' },
+  { to: '/leaderboard', key: 'nav.leaderboard', keyShort: 'nav.leaderboard.short', icon: '🏆' },
+  { to: '/settings', key: 'nav.settings', icon: '⚙️' }
 ]
 
 function Logo({ size = 'text-2xl' }: { size?: string }) {
@@ -32,6 +33,7 @@ function secondsToClock(total: number): string {
 
 /** Barre « séance en cours » : retour rapide à la séance, aucune perte en cas de navigation. */
 function SessionBar() {
+  const t = useT()
   const draft = useStore((s) => s.draft)
   const navigate = useNavigate()
   const [now, setNow] = useState(Date.now())
@@ -44,13 +46,13 @@ function SessionBar() {
   return (
     <div className="sticky top-0 z-30 -mt-5 mb-4 flex items-center justify-between gap-3 border-b-2 border-volt bg-ink/95 py-2 backdrop-blur md:-mt-8">
       <span className="truncate text-xs font-bold text-volt">
-        💪 Séance en cours · {draft.sets.length} série{draft.sets.length > 1 ? 's' : ''} · ⏱ {secondsToClock(elapsed)}
+        {t('layout.session')} · {draft.sets.length} série{draft.sets.length > 1 ? 's' : ''} · ⏱ {secondsToClock(elapsed)}
       </span>
       <button
         className="rounded-lg border-2 border-volt px-3 py-1 text-xs font-bold text-volt transition-colors hover:bg-volt hover:text-ink"
         onClick={() => navigate('/workout')}
       >
-        Reprendre
+        {t('layout.resume')}
       </button>
     </div>
   )
@@ -58,6 +60,7 @@ function SessionBar() {
 
 /** Compte à rebours de repos, visible sur tous les écrans sauf la séance. */
 function RestBar() {
+  const t = useT()
   const draft = useStore((s) => s.draft)
   const patchDraft = useStore((s) => s.patchDraft)
   const [now, setNow] = useState(Date.now())
@@ -82,7 +85,7 @@ function RestBar() {
         className="rounded-lg px-2 py-1 text-[11px] font-semibold text-zinc-500 underline"
         onClick={() => patchDraft({ restEndsAt: null })}
       >
-        Passer
+        {t('layout.skip')}
       </button>
     </div>
   )
@@ -107,15 +110,16 @@ function UndoToast() {
 }
 
 function UpdateBanner({ visible, onReload, onDismiss }: { visible: boolean; onReload: () => void; onDismiss: () => void }) {
+  const t = useT()
   if (!visible) return null
   return (
     <div className="pointer-events-auto flex items-center gap-3 rounded-xl border-2 border-volt bg-panel px-4 py-2.5 shadow-hard-sm">
-      <span className="text-xs text-zinc-100">Nouvelle version disponible.</span>
+      <span className="text-xs text-zinc-100">{t('layout.newVersion')}</span>
       <button className="btn btn-volt px-3 py-1 text-xs" onClick={onReload}>
-        Recharger
+        {t('layout.reload')}
       </button>
       <button className="text-xs font-semibold text-zinc-500 underline" onClick={onDismiss}>
-        Plus tard
+        {t('layout.later')}
       </button>
     </div>
   )
@@ -127,6 +131,8 @@ export default function Layout() {
   const draft = useStore((s) => s.draft)
   const sunMode = useStore((s) => s.settings.sunMode)
   const workouts = useStore((s) => s.workouts)
+  const lang = useStore((s) => s.settings.lang)
+  const t = useT()
   const {
     needRefresh: [needRefresh, dismissNeedRefresh],
     updateServiceWorker
@@ -137,6 +143,11 @@ export default function Layout() {
     if (sunMode) document.documentElement.dataset.sun = 'on'
     else delete document.documentElement.dataset.sun
   }, [sunMode])
+
+  // Langue de l'interface : <html lang> synchronisé (auto = langue du navigateur).
+  useEffect(() => {
+    document.documentElement.lang = lang ?? detectLang()
+  }, [lang])
 
   // Demande de stockage persistant (best effort, au cas où).
   useEffect(() => {
@@ -173,14 +184,14 @@ export default function Layout() {
           <div className="px-5 pt-6">
             <Logo />
             <div className="tape mt-4 rounded-full" />
-            <p className="eyebrow mt-3">Street workout RPG</p>
+            <p className="eyebrow mt-3">{t('layout.tagline')}</p>
           </div>
           <nav className="mt-6 flex flex-col gap-1.5 px-3">
-            {TABS.map((t, i) => (
+            {TABS.map((tab, i) => (
               <NavLink
-                key={t.to}
-                to={t.to}
-                end={t.to === '/'}
+                key={tab.to}
+                to={tab.to}
+                end={tab.to === '/'}
                 className={({ isActive }) =>
                   `flex items-center gap-3 rounded-xl border-2 px-3 py-2 text-sm font-bold transition-colors ${
                     isActive
@@ -190,15 +201,15 @@ export default function Layout() {
                 }
               >
                 <span className="hud text-[10px] opacity-60">{String(i + 1).padStart(2, '0')}</span>
-                <span className="text-base">{t.icon}</span>
-                <span>{t.label}</span>
+                <span className="text-base">{tab.icon}</span>
+                <span>{t(tab.key)}</span>
               </NavLink>
             ))}
           </nav>
           <div className="mt-auto px-5 pb-6 text-[10px] leading-relaxed text-zinc-600">
-            Tes données restent sur ton appareil.
+            {t('layout.localData')}
             <br />
-            Ajoute l'app à ton écran d'accueil ↗
+            {t('layout.addHome')}
           </div>
         </aside>
 
@@ -225,19 +236,19 @@ export default function Layout() {
         style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
       >
         <div className="mx-auto flex max-w-md items-stretch gap-0.5 px-1 py-1">
-          {TABS.map((t) => (
+          {TABS.map((tab) => (
             <NavLink
-              key={t.to}
-              to={t.to}
-              end={t.to === '/'}
+              key={tab.to}
+              to={tab.to}
+              end={tab.to === '/'}
               className={({ isActive }) =>
                 `flex flex-1 flex-col items-center gap-0.5 rounded-xl px-0.5 py-1.5 text-[9px] font-semibold ${
                   isActive ? 'bg-volt text-ink' : 'text-zinc-500'
                 }`
               }
             >
-              <span className="text-base">{t.icon}</span>
-              <span>{t.short ?? t.label}</span>
+              <span className="text-base">{tab.icon}</span>
+              <span>{t(tab.keyShort ?? tab.key)}</span>
             </NavLink>
           ))}
         </div>
