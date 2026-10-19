@@ -4,6 +4,7 @@ import Layout from './components/Layout'
 import BodyGraph from './pages/BodyGraph'
 import Home from './pages/Home'
 import Leaderboard from './pages/Leaderboard'
+import Level from './pages/Level'
 import MapPage from './pages/MapPage'
 import Progress from './pages/Progress'
 import Routines from './pages/Routines'
@@ -41,6 +42,7 @@ export default function App() {
         <Route path="progress" element={<Progress />} />
         <Route path="leaderboard" element={<Leaderboard />} />
         <Route path="settings" element={<Settings />} />
+        <Route path="niveau" element={<Level />} />
       </Route>
     </Routes>
   )

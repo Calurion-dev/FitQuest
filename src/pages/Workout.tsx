@@ -209,7 +209,9 @@ export default function WorkoutPage() {
   const pickMovement = (id: string) => {
     setCurrent(id)
     const m = movementById(id)
-    setAmount(targets[id]?.reps ?? (m?.isHold ? 30 : 10))
+    // Séance allégée : on suggère -40 % de volume.
+    const base = targets[id]?.reps ?? (m?.isHold ? 30 : 10)
+    setAmount(deload ? Math.max(1, Math.round(base * 0.6)) : base)
     // Le lest est propre au mouvement courant, pré-rempli si la routine en définit un.
     const targetKg = targets[id]?.addedKg
     setWeight(targetKg ? String(toDisplayKg(targetKg, settings.units)) : '')

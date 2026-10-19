@@ -79,6 +79,8 @@ export default function Home() {
   const dismissWager = useStore((s) => s.dismissWager)
   const startChallenge = useStore((s) => s.startChallenge)
   const abandonChallenge = useStore((s) => s.abandonChallenge)
+  const acceptDeload = useStore((s) => s.acceptDeload)
+  const dismissDeload = useStore((s) => s.dismissDeload)
   const [name, setName] = useState('')
   const [recoveryOpen, setRecoveryOpen] = useState(false)
 
@@ -146,6 +148,13 @@ export default function Home() {
   const lastFamilies: Family[] = Array.from(
     new Set((workouts[0]?.sets ?? []).map((s) => movementById(s.movementId)?.family).filter((f): f is Family => Boolean(f)))
   )
+  // Proposition de semaine allégée (#11) : 6+ semaines de rythme, pas de deload récent, pas déjà écartée cette semaine.
+  const firstDay = workouts.reduce((min, w) => (w.dayKey < min ? w.dayKey : min), workouts[0]?.dayKey ?? today)
+  const weeksSinceStart = Math.floor((dateFromKey(today).getTime() - dateFromKey(firstDay).getTime()) / (7 * 86400000))
+  const recentSessions = workouts.filter((w) => w.dayKey >= dayKey(new Date(Date.now() - 27 * 86400000))).length
+  const deloadDue = !player.lastDeloadWeekKey || player.lastDeloadWeekKey <= weekKey(new Date(Date.now() - 42 * 86400000))
+  const showDeload =
+    workouts.length > 0 && weeksSinceStart >= 6 && recentSessions >= 8 && deloadDue && player.deloadDismissedWeek !== wk
 
   return (
     <div className="space-y-5 md:space-y-6">
@@ -291,6 +300,24 @@ export default function Home() {
               <p className="mt-2 text-xs text-zinc-300">
                 🔥 Série : {player.streakDays} jour{player.streakDays > 1 ? 's' : ''} · 📅 Semaines parfaites : {perfect}
               </p>
+            </section>
+          )}
+          {showDeload && (
+            <section className="card border-2 border-ice/50 p-4">
+              <h2 className="eyebrow">🪶 Récupération</h2>
+              <p className="mt-2 text-xs text-mute">
+                {weeksSinceStart} semaines d'entraînement régulier. Une semaine allégée (volume réduit, records gelés) te
+                fera repartir plus fort.
+              </p>
+              <div className="mt-3 grid grid-cols-2 gap-2">
+                <button onClick={() => acceptDeload()} className="btn px-3 py-2 text-xs">
+                  OK, semaine légère
+                </button>
+                <button onClick={() => dismissDeload()} className="btn px-3 py-2 text-xs">
+                  Plus tard
+                </button>
+              </div>
+              <p className="mt-2 text-[10px] text-zinc-600">Astuce : active « Séance allégée » au début de ta séance.</p>
             </section>
           )}
           {boss && (

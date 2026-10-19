@@ -1,10 +1,12 @@
 import { useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { BarChart, Sparkline } from '../components/Charts'
-import { FAMILY_LABELS, MOVEMENTS } from '../data/movements'
+import { FAMILY_LABELS, MOVEMENTS, STAT_META } from '../data/movements'
+import { standardLevel } from '../data/standards'
 import {
   SUB_XP_BASE,
   bestSetSeries,
+  familyReps,
   levelInfo,
   movementTotals,
   movementXp,
@@ -15,9 +17,50 @@ import { BADGES } from '../game/badges'
 import { tierFromLevel } from '../game/tiers'
 import { dateFromKey, dayKey, formatDateShort, formatDuration, weekKey } from '../lib/date'
 import { useStore } from '../store/useStore'
+import type { StatKey } from '../types'
 
 /** Intensité du calendrier d'assiduité (0 = repos, 4 = grosse séance). */
 const DAY_LEVELS = ['', 'bg-volt/25', 'bg-volt/45', 'bg-volt/70', 'bg-volt']
+
+/** Radar 4 axes (stats RPG), SVG maison. */
+function Radar({ axes }: { axes: { label: string; icon: string; ratio: number }[] }) {
+  const cx = 100
+  const cy = 96
+  const r = 62
+  const angle = (i: number) => (Math.PI * 2 * i) / axes.length - Math.PI / 2
+  const pt = (i: number, k: number) =>
+    `${Math.round(cx + Math.cos(angle(i)) * r * k)},${Math.round(cy + Math.sin(angle(i)) * r * k)}`
+  return (
+    <svg
+      viewBox="0 0 200 192"
+      role="img"
+      aria-label="Radar des quatre stats RPG : push, pull, jambes, endurance"
+      className="mx-auto h-56 w-auto"
+    >
+      {[0.25, 0.5, 0.75, 1].map((k) => (
+        <polygon key={k} points={axes.map((_, i) => pt(i, k)).join(' ')} fill="none" stroke="#2a2a30" strokeWidth={1} />
+      ))}
+      {axes.map((a, i) => {
+        const [x, y] = pt(i, 1).split(',').map(Number)
+        return <line key={a.label} x1={cx} y1={cy} x2={x} y2={y} stroke="#2a2a30" strokeWidth={1} />
+      })}
+      <polygon
+        points={axes.map((a, i) => pt(i, Math.max(0.06, a.ratio))).join(' ')}
+        fill="rgba(242,230,0,0.22)"
+        stroke="#f2e600"
+        strokeWidth={2}
+      />
+      {axes.map((a, i) => {
+        const [x, y] = pt(i, 1.24).split(',').map(Number)
+        return (
+          <text key={a.label} x={x} y={y} textAnchor="middle" dominantBaseline="middle" fill="#9a9aa3" fontSize={10}>
+            {a.icon} {a.label}
+          </text>
+        )
+      })}
+    </svg>
+  )
+}
 
 export default function Progress() {
   const workouts = useStore((s) => s.workouts)
@@ -73,6 +116,21 @@ export default function Progress() {
     [workouts]
   )
 
+  // Équilibre push / pull sur 28 jours glissants.
+  const since28 = dayKey(new Date(Date.now() - 27 * 86400000))
+  const pushReps = familyReps(workouts, 'push', since28)
+  const pullReps = familyReps(workouts, 'pull', since28)
+  const imbalanced = pushReps > 0 && (pullReps === 0 || pushReps > pullReps * 1.5)
+
+  // Radar des stats RPG.
+  const statKeys: StatKey[] = ['push', 'pull', 'legs', 'endurance']
+  const maxStat = Math.max(1, ...statKeys.map((k) => player.stats[k]))
+  const axes = statKeys.map((k) => ({
+    label: STAT_META[k].label,
+    icon: STAT_META[k].icon,
+    ratio: player.stats[k] / maxStat
+  }))
+
   return (
     <div className="space-y-5 md:space-y-6">
       <header>
@@ -103,6 +161,61 @@ export default function Progress() {
         <h2 className="eyebrow mb-3">Volume par semaine (répétitions)</h2>
         <BarChart data={weeks} />
       </section>
+
+      <div className="grid gap-4 lg:grid-cols-3 lg:gap-6">
+        <section className="card p-4 md:p-5">
+          <h2 className="eyebrow mb-3">Profil push / pull / jambes / endurance</h2>
+          <Radar axes={axes} />
+        </section>
+
+        <section className="card p-4 md:p-5 lg:col-span-2">
+          <h2 className="eyebrow mb-3">Équilibre push / pull (28 jours)</h2>
+          {pushReps === 0 && pullReps === 0 ? (
+            <p className="text-xs text-mute">Pas encore de séries push ou pull sur la période.</p>
+          ) : (
+            <div className="space-y-3">
+              <div>
+                <div className="flex justify-between text-xs">
+                  <span className="text-zinc-300">💪 Poussé</span>
+                  <span className="hud text-mute">{pushReps.toLocaleString('fr-FR')} reps</span>
+                </div>
+                <div className="bar mt-1.5">
+                  <div style={{ width: `${Math.round((pushReps / Math.max(1, pushReps, pullReps)) * 100)}%` }} />
+                </div>
+              </div>
+              <div>
+                <div className="flex justify-between text-xs">
+                  <span className="text-zinc-300">🧗 Tiré</span>
+                  <span className="hud text-mute">{pullReps.toLocaleString('fr-FR')} reps</span>
+                </div>
+                <div className="bar mt-1.5">
+                  <div style={{ width: `${Math.round((pullReps / Math.max(1, pushReps, pullReps)) * 100)}%` }} />
+                </div>
+              </div>
+              {imbalanced ? (
+                <div className="rounded-xl border-2 border-ember/50 bg-panel-2 p-3">
+                  <p className="text-xs text-zinc-300">
+                    Tu pousses nettement plus que tu ne tires. Les épaules aiment un ratio équilibré : ajoute des tractions
+                    ou des australiennes.
+                  </p>
+                  <button
+                    onClick={() =>
+                      navigate('/workout', {
+                        state: { movements: ['tractions_pronation', 'australiennes', 'tractions_supination'] }
+                      })
+                    }
+                    className="btn mt-2.5 px-3 py-2 text-xs"
+                  >
+                    → Séance dos
+                  </button>
+                </div>
+              ) : (
+                <p className="text-xs text-mute">Ratio équilibré. Continue comme ça 🤝</p>
+              )}
+            </div>
+          )}
+        </section>
+      </div>
 
       <div className="grid gap-4 lg:grid-cols-3 lg:gap-6">
         <section className="card p-4 md:p-5 lg:col-span-2">
@@ -179,6 +292,7 @@ export default function Progress() {
               if (totals.total === 0) return null
               const info = levelInfo(movementXp(workouts, m.id), SUB_XP_BASE)
               const series = bestSetSeries(workouts, m.id)
+              const std = standardLevel(m.id, totals.best)
               return (
                 <div key={m.id} className="card p-4">
                   <div className="flex items-center gap-2.5">
@@ -209,6 +323,17 @@ export default function Progress() {
                       {m.isHold ? 's' : ''}
                     </span>
                   </div>
+                  {std && (
+                    <div className="mt-2 text-[11px] text-mute">
+                      Niveau{' '}
+                      <span className="font-bold" style={{ color: std.color }}>
+                        {std.name}
+                      </span>
+                      {std.nextName && std.remaining !== undefined
+                        ? ` · encore ${std.remaining}${m.isHold ? ' s' : ' reps'} pour ${std.nextName}`
+                        : ' · niveau max 💎'}
+                    </div>
+                  )}
                   <div className="mt-2.5">
                     <Sparkline points={series} />
                   </div>

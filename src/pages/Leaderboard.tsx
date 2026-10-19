@@ -1,4 +1,5 @@
 import { useEffect, useMemo } from 'react'
+import { Link } from 'react-router-dom'
 import { RankBadge } from '../components/RankBadge'
 import { weekXpOf } from '../game/engine'
 import { DIVISIONS, ZONE, leagueRows, myPosition } from '../game/league'
@@ -39,7 +40,10 @@ export default function Leaderboard() {
         <div className="eyebrow">Ligue</div>
         <h1 className="mt-0.5 text-3xl uppercase md:text-4xl">Classement</h1>
         <p className="mt-1.5 text-xs text-mute">
-          Ton rang grimpe avec ton XP total, comme dans le mode Classé de Fortnite.
+          Ton rang grimpe avec ton XP total, comme dans le mode Classé de Fortnite.{' '}
+          <Link to="/niveau" className="text-ice hover:underline">
+            🧮 Estime ton niveau →
+          </Link>
         </p>
       </header>
 

@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
-import { movementById } from '../data/movements'
+import { useNavigate } from 'react-router-dom'
+import { MOVEMENTS, movementById } from '../data/movements'
 import { FAMILY_MUSCLES, MUSCLE_MAP, MUSCLES, type MuscleKey } from '../data/muscles'
 import { setAmount } from '../game/engine'
 import { dateFromKey } from '../lib/date'
@@ -13,6 +14,7 @@ const WINDOWS = [
 
 export default function BodyGraph() {
   const workouts = useStore((s) => s.workouts)
+  const navigate = useNavigate()
   const [days, setDays] = useState(30)
 
   // Volume par muscle sur la fenêtre choisie : chaque série crédite entièrement les muscles qu'elle sollicite.
@@ -31,6 +33,30 @@ export default function BodyGraph() {
     }
     return { volume, max: Math.max(1, ...Object.values(volume)), setCount }
   }, [workouts, days])
+
+  // Zones non touchées sur les 7 derniers jours + mouvements qui les couvrent.
+  const week = useMemo(() => {
+    const out = Object.fromEntries(MUSCLES.map((m) => [m.key, 0])) as Record<MuscleKey, number>
+    const since = new Date(Date.now() - 7 * 86400000)
+    for (const w of workouts) {
+      if (dateFromKey(w.dayKey) < since) continue
+      for (const s of w.sets) {
+        const m = movementById(s.movementId)
+        if (!m) continue
+        for (const k of MUSCLE_MAP[m.id] ?? FAMILY_MUSCLES[m.family]) out[k] += setAmount(s)
+      }
+    }
+    return out
+  }, [workouts])
+
+  const untouched = MUSCLES.filter((m) => week[m.key] === 0)
+  const suggestions = Array.from(
+    new Set(
+      untouched.flatMap((m) =>
+        MOVEMENTS.filter((mv) => (MUSCLE_MAP[mv.id] ?? FAMILY_MUSCLES[mv.family]).includes(m.key)).map((mv) => mv.id)
+      )
+    )
+  ).slice(0, 4)
 
   const fill = (k: MuscleKey) =>
     volume[k] ? `rgba(242, 230, 0, ${(0.18 + 0.82 * (volume[k] / max)).toFixed(2)})` : '#1a1a1e'
@@ -144,6 +170,34 @@ export default function BodyGraph() {
           </p>
         </section>
       </div>
+
+      <section className="card p-4 md:p-5">
+        <h2 className="eyebrow mb-2.5">Oubliés cette semaine</h2>
+        {untouched.length === 0 ? (
+          <p className="text-xs text-mute">Tout le corps a été touché ces 7 derniers jours 💪</p>
+        ) : (
+          <>
+            <div className="flex flex-wrap gap-1.5">
+              {untouched.map((m) => (
+                <span key={m.key} className="chip cursor-default text-[11px]">
+                  {m.label}
+                </span>
+              ))}
+            </div>
+            <p className="mt-2.5 text-[11px] text-zinc-600">
+              Zones avec zéro volume ces 7 derniers jours. Rien de grave : complète quand tu peux.
+            </p>
+            {suggestions.length > 0 && (
+              <button
+                onClick={() => navigate('/workout', { state: { movements: suggestions } })}
+                className="btn mt-3 px-3 py-2 text-xs"
+              >
+                → Séance qui couvre ces zones
+              </button>
+            )}
+          </>
+        )}
+      </section>
     </div>
   )
 }
