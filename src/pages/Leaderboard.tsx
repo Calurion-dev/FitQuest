@@ -1,12 +1,17 @@
 import { useEffect, useMemo } from 'react'
 import { RankBadge } from '../components/RankBadge'
-import { RANKS, rankFromXp, rankProgress } from '../game/ranks'
+import { weekXpOf } from '../game/engine'
+import { DIVISIONS, ZONE, leagueRows, myPosition } from '../game/league'
+import { RANKS, rankProgress } from '../game/ranks'
 import { RIVALS } from '../game/rivals'
+import { weekKey } from '../lib/date'
 import { useCloud } from '../store/useCloud'
 import { useStore } from '../store/useStore'
 
 export default function Leaderboard() {
   const player = useStore((s) => s.player)
+  const workouts = useStore((s) => s.workouts)
+  const dismissLeagueResult = useStore((s) => s.dismissLeagueResult)
   const progress = rankProgress(player.xpTotal)
   const cloudUser = useCloud((s) => s.user)
   const onlineScores = useCloud((s) => s.scores)
@@ -16,15 +21,16 @@ export default function Leaderboard() {
     if (cloudUser) void loadScores()
   }, [cloudUser, loadScores])
 
-  const entries = useMemo(() => {
-    return [
-      ...RIVALS.map((r) => ({ id: r.id, name: r.name, xp: r.xp, emoji: r.emoji, me: false })),
-      { id: 'me', name: player.pseudo || 'Toi', xp: player.xpTotal, emoji: '🦸', me: true }
-    ].sort((a, b) => b.xp - a.xp || a.name.localeCompare(b.name))
-  }, [player.pseudo, player.xpTotal])
-
-  const myPosition = entries.findIndex((e) => e.me) + 1
-  const beaten = entries.filter((e) => !e.me && e.xp <= player.xpTotal).length
+  const league = player.league
+  const division = league?.division ?? 0
+  const wk = weekKey()
+  const myWeekXp = weekXpOf(workouts, wk)
+  const rows = useMemo(
+    () => leagueRows(division, wk, workouts, player.pseudo),
+    [division, wk, workouts, player.pseudo]
+  )
+  const myLeaguePos = myPosition(rows) + 1
+  const beaten = useMemo(() => RIVALS.filter((r) => r.xp <= player.xpTotal).length, [player.xpTotal])
   const ladder = [...RANKS].reverse()
 
   return (
@@ -37,6 +43,40 @@ export default function Leaderboard() {
         </p>
       </header>
 
+      {league && league.lastResult && !league.resultSeen && (
+        <section
+          className={`card border-2 p-4 ${
+            league.lastResult === 'promoted'
+              ? 'border-volt'
+              : league.lastResult === 'demoted'
+                ? 'border-ember'
+                : 'border-edge'
+          }`}
+        >
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <div className="font-display text-sm uppercase">
+                {league.lastResult === 'promoted'
+                  ? `⬆️ Promu en ${DIVISIONS[division]} !`
+                  : league.lastResult === 'demoted'
+                    ? `⬇️ Relégué en ${DIVISIONS[division]}`
+                    : '➖ Maintien en division'}
+              </div>
+              <p className="mt-1 text-xs text-mute">
+                {league.lastResult === 'promoted'
+                  ? "Tu montes d'une division. La semaine repart à zéro — accroche-toi."
+                  : league.lastResult === 'demoted'
+                    ? 'Pas de panique : les XP de cette semaine remontent vite.'
+                    : 'Tu gardes ta division. On remet ça cette semaine.'}
+              </p>
+            </div>
+            <button onClick={dismissLeagueResult} className="btn shrink-0 px-2.5 py-1 text-[11px]">
+              OK
+            </button>
+          </div>
+        </section>
+      )}
+
       <section className="card relative overflow-hidden p-5">
         <div className="tape absolute inset-x-0 top-0" />
         <div className="mt-2 flex flex-col gap-5 md:flex-row md:items-center md:gap-8">
@@ -48,7 +88,7 @@ export default function Leaderboard() {
                 {progress.rank.name}
               </div>
               <div className="hud mt-1 text-xs text-mute">
-                {player.xpTotal.toLocaleString('fr-FR')} XP · #{myPosition} sur {entries.length}
+                {player.xpTotal.toLocaleString('fr-FR')} XP · #{myLeaguePos} sur {rows.length} dans la ligue
               </div>
             </div>
           </div>
@@ -139,14 +179,25 @@ export default function Leaderboard() {
           )}
 
           <section>
-            <h2 className="eyebrow mb-2.5">Ligue locale</h2>
+            <h2 className="eyebrow mb-2.5">Ligue {DIVISIONS[division]}</h2>
+            <div className="card mb-2.5 flex items-center justify-between gap-3 px-3.5 py-2">
+              <span className="text-[10px] text-mute">
+                Semaine en cours · top {ZONE} promus, {ZONE} derniers relégués
+              </span>
+              <span className="hud shrink-0 text-xs font-bold text-volt">
+                +{myWeekXp.toLocaleString('fr-FR')} XP
+              </span>
+            </div>
             <div className="space-y-2">
-              {entries.map((e, i) => {
-                const rank = rankFromXp(e.xp)
+              {rows.map((r, i) => {
+                const promo = i < ZONE
+                const releg = i >= rows.length - ZONE
                 return (
                   <div
-                    key={e.id}
-                    className={`card flex items-center gap-3 px-3.5 py-2.5 ${e.me ? 'card-volt' : ''}`}
+                    key={r.id}
+                    className={`card flex items-center gap-3 px-3.5 py-2.5 ${
+                      r.me ? 'card-volt' : promo ? 'border-volt/50' : releg ? 'border-ember/50' : ''
+                    }`}
                   >
                     <span
                       className={`hud w-6 text-center text-xs font-bold ${
@@ -155,24 +206,28 @@ export default function Leaderboard() {
                     >
                       {String(i + 1).padStart(2, '0')}
                     </span>
-                    <span className="text-lg">{e.emoji}</span>
+                    <span className="text-lg">{r.emoji}</span>
                     <span className="min-w-0 flex-1">
                       <span className="flex items-center gap-2">
-                        <span className="truncate text-sm font-semibold">{e.name}</span>
-                        {e.me && <span className="sticker shrink-0">toi</span>}
+                        <span className="truncate text-sm font-semibold">{r.name}</span>
+                        {r.me && <span className="sticker shrink-0">toi</span>}
                       </span>
-                      <span className="eyebrow mt-0.5 block">{rank.name}</span>
+                      {(promo || releg) && (
+                        <span className={`eyebrow mt-0.5 block ${promo ? 'text-volt' : 'text-ember'}`}>
+                          {promo ? '▲ zone promo' : '▼ zone relégation'}
+                        </span>
+                      )}
                     </span>
                     <span className="hud shrink-0 text-xs font-bold">
-                      {e.xp.toLocaleString('fr-FR')} XP
+                      {r.xp.toLocaleString('fr-FR')} XP
                     </span>
                   </div>
                 )
               })}
             </div>
             <p className="mt-2 text-[10px] leading-relaxed text-zinc-600">
-              Les rivaux de la ligue locale sont simulés pour l'instant : le classement en ligne entre amis
-              (et les duels) arrivera avec la V2.
+              Ligue hebdo : chaque lundi, nouveau groupe et compteur remis à zéro. Les rivaux sont simulés
+              tant que la ligue en ligne n'est pas branchée.
             </p>
           </section>
         </div>
