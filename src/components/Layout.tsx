@@ -11,6 +11,7 @@ const TABS: { to: string; key: string; keyShort?: string; icon: string }[] = [
   { to: '/workout', key: 'nav.workout', icon: '💪' },
   { to: '/routines', key: 'nav.routines', icon: '📋' },
   { to: '/wods', key: 'nav.wods', icon: '📚' },
+  { to: '/skills', key: 'nav.skills', icon: '🌳' },
   { to: '/map', key: 'nav.map', icon: '🗺️' },
   { to: '/bodygraph', key: 'nav.bodygraph', keyShort: 'nav.bodygraph.short', icon: '🧍' },
   { to: '/progress', key: 'nav.progress', icon: '📈' },
@@ -235,20 +236,20 @@ export default function Layout() {
         className="fixed inset-x-0 bottom-0 z-40 border-t-2 border-edge bg-ink/95 backdrop-blur md:hidden"
         style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
       >
-        <div className="mx-auto flex max-w-md items-stretch gap-0.5 px-1 py-1">
+        <div className="mx-auto flex max-w-md items-stretch gap-0.5 overflow-hidden px-1 py-1">
           {TABS.map((tab) => (
             <NavLink
               key={tab.to}
               to={tab.to}
               end={tab.to === '/'}
               className={({ isActive }) =>
-                `flex flex-1 flex-col items-center gap-0.5 rounded-xl px-0.5 py-1.5 text-[9px] font-semibold ${
+                `flex min-w-0 flex-1 flex-col items-center gap-0.5 rounded-xl px-0 py-1.5 text-[8px] font-semibold ${
                   isActive ? 'bg-volt text-ink' : 'text-zinc-500'
                 }`
               }
             >
-              <span className="text-base">{tab.icon}</span>
-              <span>{t(tab.keyShort ?? tab.key)}</span>
+              <span className="text-base leading-none">{tab.icon}</span>
+              <span className="w-full truncate text-center leading-tight">{t(tab.keyShort ?? tab.key)}</span>
             </NavLink>
           ))}
         </div>

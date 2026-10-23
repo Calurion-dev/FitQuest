@@ -23,6 +23,7 @@ const FR: Dict = {
   'nav.workout': 'Séance',
   'nav.routines': 'Routines',
   'nav.wods': 'WODs',
+  'nav.skills': 'Skills',
   'nav.map': 'Spots',
   'nav.bodygraph': 'Body graph',
   'nav.bodygraph.short': 'Muscles',
@@ -111,7 +112,25 @@ const FR: Dict = {
   'lb.estim': '🧮 Estime ton niveau →',
   'lb.eyebrow': 'Ligue',
   'lb.title': 'Classement',
-  'lb.subtitle': 'Ton rang grimpe avec ton XP total, comme dans le mode Classé de Fortnite.'
+  'lb.subtitle': 'Ton rang grimpe avec ton XP total, comme dans le mode Classé de Fortnite.',
+  'skills.eyebrow': 'Arbre de compétences',
+  'skills.subtitle': '{n} compétences de callisthénie, 3 branches et 10 niveaux — schéma repris de Kinetic.',
+  'skills.search': 'Chercher une compétence (planche, muscle-up…)',
+  'skills.branches': 'Filtrer par branche',
+  'skills.all': 'Tous',
+  'skills.hint': 'Fais glisser pour explorer, zoome pour lire les noms.',
+  'skills.zoomIn': 'Zoomer',
+  'skills.zoomOut': 'Dézoomer',
+  'skills.mapAlt': 'Arbre de compétences calisthénie : branches push, pull et core.',
+  'skills.empty': 'Aucune compétence ne correspond.',
+  'skills.level': 'Niveau {n}/10',
+  'skills.levelShort': 'niveau',
+  'skills.prereq': 'Prérequis',
+  'skills.unlocks': 'Débloque',
+  'skills.none': 'Rien pour l’instant',
+  'skills.pick': 'Touche un nœud de la carte pour voir ses prérequis et ce qu’il débloque.',
+  'skills.close': 'Fermer',
+  'skills.source': 'Schéma et données repris de l’app'
 }
 
 const EN: Dict = {
@@ -119,6 +138,7 @@ const EN: Dict = {
   'nav.workout': 'Workout',
   'nav.routines': 'Routines',
   'nav.wods': 'WODs',
+  'nav.skills': 'Skills',
   'nav.map': 'Spots',
   'nav.bodygraph': 'Body graph',
   'nav.bodygraph.short': 'Muscles',
@@ -207,7 +227,25 @@ const EN: Dict = {
   'lb.estim': '🧮 Estimate your level →',
   'lb.eyebrow': 'League',
   'lb.title': 'Leaderboard',
-  'lb.subtitle': "Your rank climbs with your total XP, like in Fortnite's Ranked mode."
+  'lb.subtitle': "Your rank climbs with your total XP, like in Fortnite's Ranked mode.",
+  'skills.eyebrow': 'Skill tree',
+  'skills.subtitle': '{n} calisthenics skills, 3 branches and 10 levels — scheme taken from Kinetic.',
+  'skills.search': 'Search a skill (planche, muscle-up…)',
+  'skills.branches': 'Filter by branch',
+  'skills.all': 'All',
+  'skills.hint': 'Drag to explore, zoom in to read the names.',
+  'skills.zoomIn': 'Zoom in',
+  'skills.zoomOut': 'Zoom out',
+  'skills.mapAlt': 'Calisthenics skill tree: push, pull and core branches.',
+  'skills.empty': 'No skill matches.',
+  'skills.level': 'Level {n}/10',
+  'skills.levelShort': 'level',
+  'skills.prereq': 'Prerequisites',
+  'skills.unlocks': 'Unlocks',
+  'skills.none': 'Nothing yet',
+  'skills.pick': 'Tap a node on the map to see its prerequisites and what it unlocks.',
+  'skills.close': 'Close',
+  'skills.source': 'Scheme and data taken from the'
 }
 
 const ES: Dict = {
@@ -215,6 +253,7 @@ const ES: Dict = {
   'nav.workout': 'Entreno',
   'nav.routines': 'Rutinas',
   'nav.wods': 'WODs',
+  'nav.skills': 'Skills',
   'nav.map': 'Spots',
   'nav.bodygraph': 'Body graph',
   'nav.bodygraph.short': 'Músculos',
@@ -303,7 +342,25 @@ const ES: Dict = {
   'lb.estim': '🧮 Estima tu nivel →',
   'lb.eyebrow': 'Liga',
   'lb.title': 'Clasificación',
-  'lb.subtitle': 'Tu rango sube con tu XP total, como en el modo Clasificatoria de Fortnite.'
+  'lb.subtitle': 'Tu rango sube con tu XP total, como en el modo Clasificatoria de Fortnite.',
+  'skills.eyebrow': 'Árbol de habilidades',
+  'skills.subtitle': '{n} habilidades de calistenia, 3 ramas y 10 niveles — esquema tomado de Kinetic.',
+  'skills.search': 'Busca una habilidad (plancha, muscle-up…)',
+  'skills.branches': 'Filtrar por rama',
+  'skills.all': 'Todas',
+  'skills.hint': 'Arrastra para explorar, haz zoom para leer los nombres.',
+  'skills.zoomIn': 'Acercar',
+  'skills.zoomOut': 'Alejar',
+  'skills.mapAlt': 'Árbol de habilidades de calistenia: ramas push, pull y core.',
+  'skills.empty': 'Ninguna habilidad coincide.',
+  'skills.level': 'Nivel {n}/10',
+  'skills.levelShort': 'nivel',
+  'skills.prereq': 'Requisitos',
+  'skills.unlocks': 'Desbloquea',
+  'skills.none': 'Nada por ahora',
+  'skills.pick': 'Toca un nodo del mapa para ver sus requisitos y lo que desbloquea.',
+  'skills.close': 'Cerrar',
+  'skills.source': 'Esquema y datos tomados de la app'
 }
 
 const DICTS: Record<Lang, Dict> = { fr: FR, en: EN, es: ES }

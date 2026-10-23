@@ -334,6 +334,18 @@ export default function Settings() {
               thenx.com, u-run.fr, uptrackplus.com, wodwell.com, YouTube (Bar Brothers). Contenus et marques
               cités appartiennent à leurs auteurs.
             </p>
+            <p className="mt-1.5 text-[11px] leading-relaxed text-mute">
+              Arbre de compétences (onglet Skills) repris de l’app{' '}
+              <a
+                href="https://play.google.com/store/apps/details?id=com.valorcali.app"
+                target="_blank"
+                rel="noreferrer"
+                className="text-ice hover:underline"
+              >
+                Kinetic — Valor Cali
+              </a>
+              .
+            </p>
           </div>
         </section>
       </div>

@@ -9,6 +9,7 @@ import MapPage from './pages/MapPage'
 import Progress from './pages/Progress'
 import Routines from './pages/Routines'
 import Settings from './pages/Settings'
+import Skills from './pages/Skills'
 import Wods from './pages/Wods'
 import WorkoutPage from './pages/Workout'
 import { useCloud } from './store/useCloud'
@@ -37,6 +38,7 @@ export default function App() {
         <Route path="workout" element={<WorkoutPage />} />
         <Route path="routines" element={<Routines />} />
         <Route path="wods" element={<Wods />} />
+        <Route path="skills" element={<Skills />} />
         <Route path="map" element={<MapPage />} />
         <Route path="bodygraph" element={<BodyGraph />} />
         <Route path="progress" element={<Progress />} />
